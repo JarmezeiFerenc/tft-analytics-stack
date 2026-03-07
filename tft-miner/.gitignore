@@ -1,6 +1,6 @@
-venv/
-env/
+.venv/
 __pycache__/
+.env
 *.py[cod]
 
 .env
