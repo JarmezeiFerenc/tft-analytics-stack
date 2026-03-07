@@ -4,6 +4,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\MatchController;
 use App\Http\Controllers\Api\UnitController;
+use App\Http\Controllers\Api\LeaderboardController;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -11,3 +12,4 @@ Route::get('/user', function (Request $request) {
 
 Route::get('/matches', [MatchController::class, 'index']);
 Route::get('/unit-stats/{character_id}', [UnitController::class, 'getUnitStats']);
+Route::get('/leaderboard', [LeaderboardController::class, 'index']);
