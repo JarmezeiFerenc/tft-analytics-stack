@@ -1,14 +1,14 @@
 import { useTftAssets } from '../context/TftAssetContext';
 import { PLACEHOLDER_URL } from '../utils/cdragon';
 
-interface TftUnitImageProps {
+interface TftTraitIconProps {
   apiName: string;
   className?: string;
 }
 
-export function TftUnitImage({ apiName, className }: TftUnitImageProps) {
-  const { unitMap } = useTftAssets();
-  const src = unitMap.get(apiName.toLowerCase()) ?? PLACEHOLDER_URL;
+export function TftTraitIcon({ apiName, className }: TftTraitIconProps) {
+  const { traitMap } = useTftAssets();
+  const src = traitMap.get(apiName.toLowerCase()) ?? PLACEHOLDER_URL;
 
   return (
     <img

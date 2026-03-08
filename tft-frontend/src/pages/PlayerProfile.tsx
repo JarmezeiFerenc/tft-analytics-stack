@@ -1,7 +1,8 @@
 import { ChevronDown, Clock, Loader2, Search, Shield, User } from 'lucide-react';
 import { useState } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
-import { getUnitImageUrls, getItemImageUrls } from '../utils/cdragon';
+import { TftUnitImage } from '../components/TftUnitImage';
+import { TftItemImage } from '../components/TftItemImage';
 
 interface ProfileData {
   puuid: string;
@@ -107,41 +108,12 @@ function formatTraitName(name: string): string {
   return name.replace(/^Set\d+_/, '').replace(/^TFT\d+_/, '');
 }
 
-function formatUnitName(id: string): string {
-  return id.replace(/^TFT\d+_/, '');
-}
-
 function regionLabel(value: string): string {
   const found = REGION_OPTIONS.find((o) => o.value === value);
   return found ? found.label : value.toUpperCase();
 }
 
 /*  Small sub-components */
-
-function FallbackImg({ srcs, alt, className }: { srcs: string[]; alt: string; className?: string }) {
-  const [idx, setIdx] = useState(0);
-  const [failed, setFailed] = useState(false);
-
-  if (failed || srcs.length === 0) {
-    return (
-      <div className={`flex items-center justify-center bg-zinc-800 text-[9px] text-zinc-500 ${className ?? ''}`}>
-        {alt.slice(0, 3)}
-      </div>
-    );
-  }
-
-  return (
-    <img
-      src={srcs[idx]}
-      alt={alt}
-      className={className}
-      onError={() => {
-        if (idx + 1 < srcs.length) setIdx(idx + 1);
-        else setFailed(true);
-      }}
-    />
-  );
-}
 
 function TraitBadge({ trait }: { trait: TraitData }) {
   const style = TRAIT_STYLE_COLORS[trait.style] ?? TRAIT_STYLE_COLORS[1]!;
@@ -157,9 +129,8 @@ function UnitIcon({ unit }: { unit: UnitData }) {
   return (
     <div className="group relative flex flex-col items-center">
       <div className={`h-8 w-8 overflow-hidden rounded-md ring-2 ${ring}`}>
-        <FallbackImg
-          srcs={getUnitImageUrls(unit.characterId)}
-          alt={formatUnitName(unit.characterId)}
+        <TftUnitImage
+          apiName={unit.characterId}
           className="h-full w-full object-cover"
         />
       </div>
@@ -173,13 +144,11 @@ function UnitIcon({ unit }: { unit: UnitData }) {
       {unit.items.length > 0 && (
         <div className="mt-0.5 flex gap-px">
           {unit.items.map((item, i) => (
-            <div key={i} className="h-3.5 w-3.5 overflow-hidden rounded-sm">
-              <FallbackImg
-                srcs={getItemImageUrls(item)}
-                alt={item}
-                className="h-full w-full object-cover"
-              />
-            </div>
+            <TftItemImage
+              key={i}
+              apiName={item}
+              className="h-3.5 w-3.5 rounded-sm object-cover"
+            />
           ))}
         </div>
       )}
@@ -220,9 +189,8 @@ function MatchRow({ match, searchedPuuid }: { match: MatchData; searchedPuuid: s
         <div className="ml-auto flex items-center gap-1">
           {match.myUnits.map((u, i) => (
             <div key={i} className="h-7 w-7 overflow-hidden rounded-md ring-1 ring-zinc-700">
-              <FallbackImg
-                srcs={getUnitImageUrls(u.characterId)}
-                alt={formatUnitName(u.characterId)}
+              <TftUnitImage
+                apiName={u.characterId}
                 className="h-full w-full object-cover"
               />
             </div>

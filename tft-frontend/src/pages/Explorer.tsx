@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import type { FormEvent } from 'react';
-import { TftItemIcon } from '../components/TftItemIcon';
+import { TftItemImage } from '../components/TftItemImage';
 import { TftUnitImage } from '../components/TftUnitImage';
 
 type UnitStatsRow = {
@@ -12,7 +12,7 @@ type UnitStatsRow = {
 };
 
 export default function Explorer() {
-  const [characterId, setCharacterId] = useState('TFT16_Aatrox');
+  const [characterId, setCharacterId] = useState('TFT16_Taric');
   const [tier, setTier] = useState('any');
   const [minGames, setMinGames] = useState('1');
   const [sortBy, setSortBy] = useState<'performance' | 'popularity'>('performance');
@@ -76,13 +76,13 @@ export default function Explorer() {
         </div>
 
         <div className="flex items-center gap-3 rounded-2xl border border-dashboard-border bg-zinc-900/60 px-3 py-2">
-          <TftUnitImage unitId={characterId} size={72} />
+          <TftUnitImage apiName={characterId} className="h-[72px] w-[72px] rounded-2xl border-[3px] border-[#d4af37] object-cover" />
           <div>
             <p className="text-xs uppercase tracking-wider text-zinc-500">Selected Unit</p>
             <p className="text-sm font-medium text-zinc-100">{characterId}</p>
             <div className="mt-1 flex items-center gap-1.5">
               {selectedItems.slice(0, 3).map((itemId) => (
-                <TftItemIcon key={itemId} itemId={itemId} size={24} />
+                <TftItemImage key={itemId} apiName={itemId} className="h-6 w-6 rounded-md border border-zinc-400 object-cover" />
               ))}
             </div>
           </div>
@@ -98,7 +98,7 @@ export default function Explorer() {
           <input
             value={characterId}
             onChange={(e) => setCharacterId(e.target.value)}
-            placeholder="TFT13_Akali"
+            placeholder="TFT16_Taric"
             required
             className="w-full rounded-xl border border-dashboard-border bg-zinc-900 px-3 py-2 text-zinc-100 outline-none ring-indigo-500/70 transition focus:ring"
           />
@@ -179,7 +179,7 @@ export default function Explorer() {
                         <div className="space-y-2">
                           <div className="flex items-center gap-2">
                             {itemIds.map((itemId) => (
-                              <TftItemIcon key={`${itemId}-${index}`} itemId={itemId} size={30} />
+                              <TftItemImage key={`${itemId}-${index}`} apiName={itemId} className="h-[30px] w-[30px] rounded-md border border-zinc-400 object-cover" />
                             ))}
                           </div>
                           <p className="text-xs text-zinc-500">{itemIds.join(', ')}</p>
