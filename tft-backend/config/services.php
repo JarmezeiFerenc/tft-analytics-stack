@@ -28,6 +28,12 @@ return [
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
 
+    'riot' => [
+        'api_key' => env('RIOT_API_KEY'),
+        'verify_ssl' => env('RIOT_HTTP_VERIFY', true),
+        'ca_bundle' => env('RIOT_CA_BUNDLE'),
+    ],
+
     'slack' => [
         'notifications' => [
             'bot_user_oauth_token' => env('SLACK_BOT_USER_OAUTH_TOKEN'),

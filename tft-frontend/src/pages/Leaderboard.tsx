@@ -1,7 +1,6 @@
 import { Loader2, Search, Trophy } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 
-// Types
 interface LeaderboardRow {
   gameName: string;
   tagline: string;
@@ -12,7 +11,6 @@ interface LeaderboardRow {
   winRate: number;
 }
 
-// Constants
 const API_BASE = 'http://localhost:8000/api';
 
 const REGION_OPTIONS = [
@@ -24,7 +22,6 @@ const REGION_OPTIONS = [
   { label: 'KR', value: 'kr' },
 ];
 
-// Helpers
 function toLeaderboardRows(data: unknown): LeaderboardRow[] {
   if (Array.isArray(data)) return data as LeaderboardRow[];
   if (data && typeof data === 'object' && 'data' in data && Array.isArray((data as { data: unknown }).data)) {
