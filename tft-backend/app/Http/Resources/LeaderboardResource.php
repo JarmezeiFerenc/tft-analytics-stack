@@ -17,12 +17,13 @@ class LeaderboardResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
-            'gameName' => (string) $this->riotIdGameName,
-            'tagline' => (string) $this->riotIdTagline,
-            'region' => (string) $this->region,
-            'matchesPlayed' => (int) $this->matchesPlayed,
-            'top4Rate' => (float) $this->top4Rate,
-            'winRate' => (float) $this->winRate,
+            'gameName'      => (string) $this->riotIdGameName,
+            'tagline'       => (string) $this->riotIdTagline,
+            'region'        => (string) $this->region,
+            'tier'          => (string) $this->tier,
+            'leaguePoints'  => (int) $this->leaguePoints,
+            'totalGames'    => (int) $this->totalGames,
+            'winRate'       => (float) $this->winRate,
         ];
     }
 }

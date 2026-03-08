@@ -11,29 +11,42 @@ class LeaderboardController extends Controller
 {
     public function index(Request $request)
     {
-        $regionSql = "LOWER(SUBSTRING_INDEX(match_id, '_', 1))";
-
-        $query = DB::table('match_participants')
+        $namesSub = DB::table('match_participants')
             ->select(
-                'riotIdGameName',
-                'riotIdTagline',
-                DB::raw("$regionSql as region"),
-                DB::raw('COUNT(*) as matchesPlayed'),
-                DB::raw('ROUND(100 * SUM(CASE WHEN placement <= 4 THEN 1 ELSE 0 END) / COUNT(*), 2) as top4Rate'),
-                DB::raw('ROUND(100 * SUM(CASE WHEN placement = 1 THEN 1 ELSE 0 END) / COUNT(*), 2) as winRate')
+                'puuid',
+                DB::raw("LOWER(SUBSTRING_INDEX(match_id, '_', 1)) as region"),
+                DB::raw('MAX(riotIdGameName) as riotIdGameName'),
+                DB::raw('MAX(riotIdTagline) as riotIdTagline')
             )
             ->whereNotNull('riotIdGameName')
-            ->whereNotNull('riotIdTagline');
+            ->whereNotNull('riotIdTagline')
+            ->groupBy('puuid', DB::raw("LOWER(SUBSTRING_INDEX(match_id, '_', 1))"));
 
-        if ($request->has('region') && $request->region !== 'Global') {
-            $query->whereRaw("$regionSql = ?", [strtolower($request->region)]);
+        $query = DB::table('player_league_entries as ple')
+            ->joinSub($namesSub, 'names', function ($join) {
+                $join->on('ple.puuid', '=', 'names.puuid')
+                     ->on('ple.region', '=', 'names.region');
+            })
+            ->select(
+                'names.riotIdGameName',
+                'names.riotIdTagline',
+                'ple.region',
+                'ple.tier',
+                'ple.leaguePoints',
+                'ple.wins',
+                'ple.losses',
+                DB::raw('(ple.wins + ple.losses) as totalGames'),
+                DB::raw('ROUND(IF(ple.wins + ple.losses > 0, 100 * ple.wins / (ple.wins + ple.losses), 0), 2) as winRate')
+            );
+
+        if ($request->filled('region') && $request->region !== 'Global') {
+            $query->where('ple.region', strtolower($request->region));
         }
 
-        $data = $query->groupBy('riotIdGameName', 'riotIdTagline', DB::raw($regionSql))
-                    ->orderBy('winRate', 'desc')
-                    ->orderBy('matchesPlayed', 'desc')
-                    ->limit(100)
-                    ->get();
+        $data = $query
+            ->orderByDesc('ple.leaguePoints')
+            ->limit(100)
+            ->get();
 
         return LeaderboardResource::collection($data);
     }

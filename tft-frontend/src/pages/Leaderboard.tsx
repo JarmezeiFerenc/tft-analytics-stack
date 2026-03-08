@@ -1,30 +1,21 @@
 import { Loader2, Search, Trophy } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 
-type RegionOption = {
-  label: string;
-  value: string;
-};
-
-type LeaderboardRow = {
+// Types
+interface LeaderboardRow {
   gameName: string;
   tagline: string;
   region: string;
-  matchesPlayed: number;
-  top4Rate: number;
+  tier: string;
+  leaguePoints: number;
+  totalGames: number;
   winRate: number;
-};
+}
 
-type LeaderboardApiRow = {
-  gameName: string;
-  tagline: string;
-  region: string;
-  matchesPlayed: number | string;
-  top4Rate: number | string;
-  winRate: number | string;
-};
+// Constants
+const API_BASE = 'http://localhost:8000/api';
 
-const REGION_OPTIONS: RegionOption[] = [
+const REGION_OPTIONS = [
   { label: 'Global', value: 'Global' },
   { label: 'EUNE', value: 'eun1' },
   { label: 'EUW', value: 'euw1' },
@@ -33,71 +24,29 @@ const REGION_OPTIONS: RegionOption[] = [
   { label: 'KR', value: 'kr' },
 ];
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://127.0.0.1:8000/api';
-
-function toNumber(value: unknown): number {
-  if (typeof value === 'number' && Number.isFinite(value)) {
-    return value;
+// Helpers
+function toLeaderboardRows(data: unknown): LeaderboardRow[] {
+  if (Array.isArray(data)) return data as LeaderboardRow[];
+  if (data && typeof data === 'object' && 'data' in data && Array.isArray((data as { data: unknown }).data)) {
+    return (data as { data: LeaderboardRow[] }).data;
   }
-
-  if (typeof value === 'string') {
-    const parsed = Number(value);
-    return Number.isFinite(parsed) ? parsed : 0;
-  }
-
-  return 0;
+  return [];
 }
 
-function formatRate(rawRate: number): string {
-  const normalizedRate = rawRate <= 1 ? rawRate * 100 : rawRate;
-  return `${normalizedRate.toFixed(1)}%`;
-}
-
-function normalizePlayer(row: Partial<LeaderboardApiRow>): LeaderboardRow {
-  return {
-    gameName: row.gameName ?? 'Unknown Player',
-    tagline: row.tagline ?? '----',
-    region: (row.region ?? 'global').toLowerCase(),
-    matchesPlayed: toNumber(row.matchesPlayed),
-    top4Rate: toNumber(row.top4Rate),
-    winRate: toNumber(row.winRate),
-  };
-}
-
-function toLeaderboardRows(payload: unknown): LeaderboardRow[] {
-  if (Array.isArray(payload)) {
-    return payload.map((item) => normalizePlayer(item as Partial<LeaderboardApiRow>));
-  }
-
-  // Supports wrapped responses if API behavior changes later.
-  if (
-    payload &&
-    typeof payload === 'object' &&
-    'data' in payload &&
-    Array.isArray((payload as { data: unknown }).data)
-  ) {
-    return (payload as { data: unknown[] }).data.map((item) =>
-      normalizePlayer(item as Partial<LeaderboardApiRow>)
-    );
-  }
-
-  throw new Error('Invalid API response format. Expected array.');
+function formatRate(value: number): string {
+  return `${value.toFixed(1)}%`;
 }
 
 function rankBadgeClass(rank: number): string {
-  if (rank === 1) {
-    return 'border-amber-300/30 bg-amber-300/20 text-amber-100';
-  }
+  if (rank === 1) return 'border-yellow-500/60 bg-yellow-500/15 text-yellow-300';
+  if (rank === 2) return 'border-zinc-400/50 bg-zinc-400/10 text-zinc-300';
+  if (rank === 3) return 'border-amber-600/50 bg-amber-600/10 text-amber-400';
+  return 'border-zinc-700 bg-zinc-800 text-zinc-400';
+}
 
-  if (rank === 2) {
-    return 'border-slate-300/30 bg-slate-300/20 text-slate-100';
-  }
-
-  if (rank === 3) {
-    return 'border-orange-300/30 bg-orange-300/20 text-orange-100';
-  }
-
-  return 'border-zinc-700 bg-zinc-800 text-zinc-200';
+function regionLabel(value: string): string {
+  const found = REGION_OPTIONS.find((o) => o.value === value);
+  return found ? found.label : value.toUpperCase();
 }
 
 export default function Leaderboard() {
@@ -172,7 +121,7 @@ export default function Leaderboard() {
           <div>
             <h2 className="text-2xl font-semibold tracking-tight text-zinc-100">Leaderboard</h2>
             <p className="mt-1 text-sm text-zinc-400">
-              Ranked players by performance metrics with region and name filtering.
+              Top 100 players by rank, filtered by region and searchable by Riot ID. 
             </p>
           </div>
         </div>
@@ -232,9 +181,9 @@ export default function Leaderboard() {
               <th className="px-4 py-3 text-left font-medium">Rank</th>
               <th className="px-4 py-3 text-left font-medium">Player</th>
               <th className="px-4 py-3 text-left font-medium">Region</th>
-              <th className="px-4 py-3 text-left font-medium">Matches</th>
+              <th className="px-4 py-3 text-left font-medium">Rank &amp; LP</th>
+              <th className="px-4 py-3 text-left font-medium">Total Games</th>
               <th className="px-4 py-3 text-left font-medium">Top 4 Rate</th>
-              <th className="px-4 py-3 text-left font-medium">Win Rate</th>
             </tr>
           </thead>
 
@@ -286,12 +235,16 @@ export default function Leaderboard() {
 
                     <td className="px-4 py-3">
                       <span className="inline-flex rounded-full border border-zinc-700 bg-zinc-800 px-2.5 py-1 text-xs font-medium uppercase tracking-wide text-zinc-300">
-                        {row.region}
+                        {regionLabel(row.region)}
                       </span>
                     </td>
 
-                    <td className="px-4 py-3 text-zinc-200">{row.matchesPlayed}</td>
-                    <td className="px-4 py-3 text-zinc-200">{formatRate(row.top4Rate)}</td>
+                    <td className="px-4 py-3">
+                      <span className="font-medium text-indigo-300">{row.tier}</span>
+                      <span className="text-zinc-400"> — {row.leaguePoints} LP</span>
+                    </td>
+
+                    <td className="px-4 py-3 text-zinc-200">{row.totalGames}</td>
                     <td className="px-4 py-3 text-zinc-200">{formatRate(row.winRate)}</td>
                   </tr>
                 );
