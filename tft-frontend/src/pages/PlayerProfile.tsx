@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { TftUnitImage } from '../components/TftUnitImage';
 import { TftItemImage } from '../components/TftItemImage';
+import { TftTraitIcon } from '../components/TftTraitIcon';
 
 interface ProfileData {
   puuid: string;
@@ -71,13 +72,6 @@ const REGION_OPTIONS = [
   { label: 'KR', value: 'kr' },
 ];
 
-const TRAIT_STYLE_COLORS: Record<number, string> = {
-  1: 'border-zinc-500 bg-zinc-500/20 text-zinc-300',
-  2: 'border-green-500 bg-green-500/20 text-green-300',
-  3: 'border-blue-500 bg-blue-500/20 text-blue-300',
-  4: 'border-yellow-500 bg-yellow-500/20 text-yellow-300',
-};
-
 const RARITY_RING: Record<number, string> = {
   0: 'ring-zinc-600',
   1: 'ring-green-500',
@@ -104,25 +98,21 @@ function formatGameLength(seconds: number): string {
   return `${m}:${s.toString().padStart(2, '0')}`;
 }
 
-function formatTraitName(name: string): string {
-  return name.replace(/^Set\d+_/, '').replace(/^TFT\d+_/, '');
-}
-
 function regionLabel(value: string): string {
   const found = REGION_OPTIONS.find((o) => o.value === value);
   return found ? found.label : value.toUpperCase();
 }
 
-/*  Small sub-components */
-
-function TraitBadge({ trait }: { trait: TraitData }) {
-  const style = TRAIT_STYLE_COLORS[trait.style] ?? TRAIT_STYLE_COLORS[1]!;
-  return (
-    <span className={`inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-[10px] font-medium ${style}`}>
-      {formatTraitName(trait.name)} {trait.numUnits}
-    </span>
-  );
+function sortTraitsForDisplay(traits: TraitData[]): TraitData[] {
+  return [...traits]
+    .filter((trait) => trait.style > 0)
+    .sort((a, b) => {
+      if (b.style !== a.style) return b.style - a.style;
+      return b.numUnits - a.numUnits;
+    });
 }
+
+/*  Small sub-components */
 
 function UnitIcon({ unit }: { unit: UnitData }) {
   const ring = RARITY_RING[unit.rarity] ?? 'ring-zinc-600';
@@ -161,7 +151,7 @@ function UnitIcon({ unit }: { unit: UnitData }) {
 function MatchRow({ match, searchedPuuid }: { match: MatchData; searchedPuuid: string }) {
   const [open, setOpen] = useState(false);
   const placement = match.myPlacement ?? 0;
-  const topTraits = match.myTraits.filter((t) => t.style >= 2).slice(0, 4);
+  const topTraits = sortTraitsForDisplay(match.myTraits);
 
   return (
     <div className="rounded-xl border border-zinc-800 bg-zinc-900/70 overflow-hidden">
@@ -178,22 +168,22 @@ function MatchRow({ match, searchedPuuid }: { match: MatchData; searchedPuuid: s
           {placement || '?'}
         </span>
 
-        {/* Traits */}
-        <div className="hidden flex-wrap gap-1 sm:flex">
-          {topTraits.map((t, i) => (
-            <TraitBadge key={i} trait={t} />
+        {/* Units */}
+        <div className="flex flex-wrap items-start gap-1.5">
+          {match.myUnits.map((u, i) => (
+            <UnitIcon key={i} unit={u} />
           ))}
         </div>
 
-        {/* Units */}
-        <div className="ml-auto flex items-center gap-1">
-          {match.myUnits.map((u, i) => (
-            <div key={i} className="h-7 w-7 overflow-hidden rounded-md ring-1 ring-zinc-700">
-              <TftUnitImage
-                apiName={u.characterId}
-                className="h-full w-full object-cover"
-              />
-            </div>
+        {/* Traits */}
+        <div className="ml-auto hidden flex-wrap gap-1 sm:flex">
+          {topTraits.map((trait, i) => (
+            <TftTraitIcon
+              key={`${trait.name}-${trait.style}-${i}`}
+              apiName={trait.name}
+              style={trait.style}
+              numUnits={trait.numUnits}
+            />
           ))}
         </div>
 
@@ -240,12 +230,14 @@ function MatchRow({ match, searchedPuuid }: { match: MatchData; searchedPuuid: s
 
                   {/* Traits */}
                   <div className="hidden flex-wrap justify-end gap-1 lg:flex">
-                    {p.traits
-                      .filter((t) => t.style >= 2)
-                      .slice(0, 4)
-                      .map((t, k) => (
-                        <TraitBadge key={k} trait={t} />
-                      ))}
+                    {sortTraitsForDisplay(p.traits).map((trait, k) => (
+                      <TftTraitIcon
+                        key={`${trait.name}-${trait.style}-${k}`}
+                        apiName={trait.name}
+                        style={trait.style}
+                        numUnits={trait.numUnits}
+                      />
+                    ))}
                   </div>
                 </div>
               );

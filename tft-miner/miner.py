@@ -145,7 +145,6 @@ def save_match_data(match_data: dict) -> None:
         info = match_data.get("info", {})
         match_id = metadata.get("match_id")
 
-        # Riot's game_datetime is typically epoch milliseconds.
         raw_game_datetime = info.get("game_datetime")
         game_datetime = None
         if raw_game_datetime is not None:
@@ -317,7 +316,6 @@ def claim_pending_match_id(region: str) -> str | None:
             conn.start_transaction()
             cursor = conn.cursor()
 
-            # Short transaction scope: lock one row -> mark processing -> commit.
             cursor.execute(
                 """
                 SELECT match_id
