@@ -170,7 +170,6 @@ class PlayerProfileController extends Controller
         return $this->riot($url, $apiKey) ?? [];
     }
 
-    /*  Match sync, saves ALL 8 participants per match */
     private function syncMissingMatches(array $matchIds, string $region, string $apiKey): void
     {
         if (empty($matchIds)) {

@@ -1,6 +1,6 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import Layout from './components/Layout';
-import Dashboard from './pages/Dashboard';
+import HomePage from './pages/HomePage';
 import Explorer from './pages/Explorer';
 import CompStats from './pages/CompStats';
 import Leaderboard from './pages/Leaderboard';
@@ -11,7 +11,7 @@ export default function App() {
     <BrowserRouter>
       <Routes>
         <Route element={<Layout />}>
-          <Route path="/" element={<Dashboard />} />
+          <Route path="/" element={<HomePage />} />
           <Route path="/explorer" element={<Explorer />} />
           <Route path="/stats" element={<CompStats />} />
           <Route path="/ranking" element={<Leaderboard />} />

@@ -53,6 +53,7 @@ interface SortConfig<T> {
 
 const API_BASE = 'http://127.0.0.1:8000/api';
 const DEBOUNCE_MS = 600;
+const MIN_GAMES_OPTIONS = [10, 25, 50, 100, 300, 500, 1000, 3000] as const;
 
 function useSortableData<T extends object>(items: T[], defaultConfig: SortConfig<T> | null = null) {
   const [sortConfig, setSortConfig] = useState<SortConfig<T> | null>(defaultConfig);
@@ -116,6 +117,12 @@ function rateColor(val: number): string {
   if (val >= 70) return 'text-emerald-400';
   if (val >= 50) return 'text-yellow-400';
   return 'text-red-400';
+}
+
+function isBlockedExplorerItem(key: string): boolean {
+  const normalized = key.toLowerCase();
+  const blockedWords = ['augment', 'consumable', 'mod', 'tutorial', 'corrupted'];
+  return blockedWords.some((word) => normalized.includes(word)) || normalized.startsWith('tft_item_empty');
 }
 
 /*  Searchable Dropdown (shared)  */
@@ -183,6 +190,36 @@ function SearchableDropdown({
   );
 }
 
+function ItemSelectorDropdown({
+  allItems,
+  selected,
+  onSelect,
+}: {
+  allItems: string[];
+  selected: Set<string>;
+  onSelect: (key: string) => void;
+}) {
+  const explorerItems = useMemo(
+    () => allItems.filter((key) => key.startsWith('tft_item_') && !isBlockedExplorerItem(key)),
+    [allItems],
+  );
+
+  return (
+    <SearchableDropdown
+      entries={explorerItems}
+      selected={selected}
+      onSelect={onSelect}
+      placeholder="Pin an item..."
+      renderOption={(key) => (
+        <>
+          <TftItemImage apiName={key} className="h-5 w-5 rounded object-cover" />
+          <span className="truncate">{key.replace(/^TFT\d+_Item_|^TFT_Item_/i, '')}</span>
+        </>
+      )}
+    />
+  );
+}
+
 /*  Item Picker for a UnitFilter  */
 
 function ItemPicker({
@@ -236,17 +273,10 @@ function ItemPicker({
 
       {/* Add item dropdown */}
       {unitFilter.items.length < 3 && (
-        <SearchableDropdown
-          entries={allItems}
+        <ItemSelectorDropdown
+          allItems={allItems}
           selected={selectedSet}
           onSelect={(key) => onChange({ ...unitFilter, items: [...unitFilter.items, key] })}
-          placeholder="Pin an item…"
-          renderOption={(key) => (
-            <>
-              <TftItemImage apiName={key} className="h-5 w-5 rounded object-cover" />
-              <span className="truncate">{key.replace(/^TFT\d+_Item_|^TFT_Item_/i, '')}</span>
-            </>
-          )}
         />
       )}
     </div>
@@ -392,10 +422,7 @@ export default function Explorer() {
 
   const allUnitKeys = useMemo(() => [...unitMap.keys()].sort(), [unitMap]);
   const allTraitKeys = useMemo(() => [...traitMap.keys()].sort(), [traitMap]);
-  const allItemKeys = useMemo(
-    () => [...itemMap.keys()].filter((k) => k.includes('_item_')).sort(),
-    [itemMap],
-  );
+  const allItemKeys = useMemo(() => [...itemMap.keys()].sort(), [itemMap]);
 
   const [selectedTraits, setSelectedTraits] = useState<string[]>([]);
   const [selectedUnits, setSelectedUnits] = useState<UnitFilter[]>([]);
@@ -584,16 +611,16 @@ export default function Explorer() {
 
           {/* Min Games */}
           <section>
-            <label className="flex items-center gap-2 text-xs text-zinc-400">
-              Min Games
-              <input
-                type="number"
-                min={1}
-                value={minGames}
-                onChange={(e) => setMinGames(Math.max(1, Number(e.target.value) || 1))}
-                className="w-16 rounded-md border border-zinc-700 bg-zinc-900 px-2 py-1 text-xs text-zinc-200 outline-none"
-              />
-            </label>
+            <label className="mb-1 block text-xs text-zinc-400">Min Games</label>
+            <select
+              value={minGames}
+              onChange={(e) => setMinGames(Number(e.target.value))}
+              className="w-full rounded-md border border-zinc-800 bg-zinc-900/70 px-2 py-1.5 text-xs text-zinc-100 outline-none transition focus:ring-2 focus:ring-indigo-500"
+            >
+              {MIN_GAMES_OPTIONS.map((value) => (
+                <option key={value} value={value}>{value}</option>
+              ))}
+            </select>
           </section>
         </div>
       </aside>
@@ -649,11 +676,10 @@ export default function Explorer() {
               key={t.id}
               type="button"
               onClick={() => setActiveTab(t.id)}
-              className={`flex-1 rounded-lg px-3 py-2 text-sm font-medium transition ${
-                activeTab === t.id
+              className={`flex-1 rounded-lg px-3 py-2 text-sm font-medium transition ${activeTab === t.id
                   ? 'bg-indigo-500 text-white shadow'
                   : 'text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200'
-              }`}
+                }`}
             >
               {t.label}
             </button>

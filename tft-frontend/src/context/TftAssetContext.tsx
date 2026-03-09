@@ -56,11 +56,6 @@ export function TftAssetProvider({ children }: { children: ReactNode }) {
         ready: false,
     });
 
-    function isBlocked(str: string): boolean {
-        const blocked = ['augment', 'consumable', 'mod', 'tutorial', 'corrupted'];
-        return blocked.some(word => str.includes(word)) || str.startsWith('tft_item_empty');
-    }
-
     useEffect(() => {
         let cancelled = false;
 
@@ -78,21 +73,8 @@ export function TftAssetProvider({ children }: { children: ReactNode }) {
 
                 if (Array.isArray(data.items)) {
                     for (const item of data.items) {
-                        const apiName = item.apiName ?? '';
-                        const fallbackId = item.id ?? '';
-                        const icon = item.icon ?? '';
-                        const key = (apiName || fallbackId).toLowerCase();
-                        const normalizedId = fallbackId.toLowerCase();
-                        const normalizedIcon = icon.toLowerCase();
-
-                        const startsAsStandardItem = key.startsWith('tft_item_');
-                        const isBlockedName = isBlocked(key);
-                        const isBlockedId = isBlocked(normalizedId);
-                        const isBlockedIcon = isBlocked(normalizedIcon);
-
-                        if (!startsAsStandardItem || isBlockedName || isBlockedId || isBlockedIcon) {
-                            continue;
-                        }
+                        const key = (item.apiName ?? item.id ?? '').toLowerCase();
+                        const icon = item.icon;
                         if (key && icon) {
                             itemMap.set(key, cdragonAssetPathToPngUrl(icon));
                         }

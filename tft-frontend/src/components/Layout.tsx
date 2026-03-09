@@ -1,15 +1,15 @@
-import { BarChart2, LayoutDashboard, Search, Trophy, User } from 'lucide-react';
+import { BarChart2, Home, Search, Trophy, User } from 'lucide-react';
 import { NavLink, Outlet } from 'react-router-dom';
 
 const navigation = [
-  { to: '/', label: 'Dashboard', icon: LayoutDashboard },
+  { to: '/', label: 'Home', icon: Home },
   { to: '/explorer', label: 'Explorer', icon: Search },
   { to: '/stats', label: 'Comp Stats', icon: BarChart2 },
   { to: '/ranking', label: 'Leaderboard', icon: Trophy },
   { to: '/player', label: 'Player Profile', icon: User },
 ];
 
-function NavItem({ to, label, icon: Icon }: { to: string; label: string; icon: typeof LayoutDashboard }) {
+function NavItem({ to, label, icon: Icon }: { to: string; label: string; icon: typeof Home }) {
   return (
     <NavLink
       to={to}

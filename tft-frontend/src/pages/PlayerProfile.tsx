@@ -4,6 +4,7 @@ import { useParams, useSearchParams } from 'react-router-dom';
 import { TftUnitImage } from '../components/TftUnitImage';
 import { TftItemImage } from '../components/TftItemImage';
 import { TftTraitIcon } from '../components/TftTraitIcon';
+import { PlacementChart } from '../components/PlacementChart';
 
 interface ProfileData {
   puuid: string;
@@ -406,6 +407,8 @@ export default function PlayerProfile() {
       {/* Match history */}
       {profile && !loading && (
         <div className="space-y-2">
+          <PlacementChart matches={matches.slice(0, 20)} />
+
           <h4 className="px-1 text-sm font-medium text-zinc-400">
             Match History ({matches.length})
           </h4>
