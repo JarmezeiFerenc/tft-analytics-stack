@@ -31,22 +31,17 @@ class PlayerProfileController extends Controller
                 return response()->json(['error' => 'Riot API key not configured.'], 500);
             }
 
-            // 1. Resolve puuid
             $puuid = $this->resolvePuuid($continent, $gameName, $tagline, $apiKey);
             if (!$puuid) {
                 return response()->json(['error' => 'Player not found on Riot servers.'], 404);
             }
 
-            // 2. Fetch & upsert ranked data
             $leagueEntry = $this->syncLeagueEntry($region, $puuid, $apiKey);
 
-            // 3. Fetch last 20 match IDs
             $matchIds = $this->fetchMatchIds($continent, $puuid, $apiKey, 20);
 
-            // 4. Sync missing matches (all 8 participants)
             $this->syncMissingMatches($matchIds, $region, $apiKey);
 
-            // 5. Build & return payload
             return response()->json($this->buildPayload(
                 $puuid, $region, $gameName, $tagline, $leagueEntry, $matchIds
             ));
@@ -65,9 +60,7 @@ class PlayerProfileController extends Controller
         }
     }
 
-    /* ------------------------------------------------------------------ */
-    /*  Riot API helpers                                                    */
-    /* ------------------------------------------------------------------ */
+    /*  Riot API helpers */
 
     private function riot(string $url, string $apiKey): ?array
     {
@@ -116,12 +109,20 @@ class PlayerProfileController extends Controller
         $data = $this->riot($url, $apiKey);
 
         if (!$data || !is_array($data)) {
-            return null;
+            return $this->storedLeagueEntry($region, $puuid);
         }
 
-        $ranked = collect($data)->firstWhere('queueType', 'RANKED_TFT');
+        $entries = array_is_list($data)
+            ? $data
+            : ((isset($data['queueType']) && is_string($data['queueType'])) ? [$data] : []);
+
+        $ranked = collect($entries)->first(
+            fn ($entry) => is_array($entry)
+                && strtoupper((string) ($entry['queueType'] ?? '')) === 'RANKED_TFT'
+        );
+
         if (!$ranked) {
-            return null;
+            return $this->storedLeagueEntry($region, $puuid);
         }
 
         $now = now();
@@ -141,16 +142,35 @@ class PlayerProfileController extends Controller
         return $ranked;
     }
 
+    private function storedLeagueEntry(string $region, string $puuid): ?array
+    {
+        $row = DB::table('player_league_entries')
+            ->where('puuid', $puuid)
+            ->where('region', $region)
+            ->where('queueType', 'RANKED_TFT')
+            ->first();
+
+        if (!$row) {
+            return null;
+        }
+
+        return [
+            'tier' => (string) ($row->tier ?? 'UNRANKED'),
+            'rank' => '',
+            'leaguePoints' => (int) ($row->leaguePoints ?? 0),
+            'wins' => (int) ($row->wins ?? 0),
+            'losses' => (int) ($row->losses ?? 0),
+            'queueType' => 'RANKED_TFT',
+        ];
+    }
+
     private function fetchMatchIds(string $continent, string $puuid, string $apiKey, int $count): array
     {
         $url = "https://{$continent}.api.riotgames.com/tft/match/v1/matches/by-puuid/{$puuid}/ids?start=0&count={$count}";
         return $this->riot($url, $apiKey) ?? [];
     }
 
-    /* ------------------------------------------------------------------ */
-    /*  Match sync — saves ALL 8 participants per match                    */
-    /* ------------------------------------------------------------------ */
-
+    /*  Match sync, saves ALL 8 participants per match */
     private function syncMissingMatches(array $matchIds, string $region, string $apiKey): void
     {
         if (empty($matchIds)) {
@@ -171,7 +191,6 @@ class PlayerProfileController extends Controller
                 $this->saveFullMatch($data);
             }
 
-            // Respect Riot rate limits
             usleep(1_200_000);
         }
     }
@@ -251,10 +270,7 @@ class PlayerProfileController extends Controller
         });
     }
 
-    /* ------------------------------------------------------------------ */
-    /*  Build JSON payload                                                 */
-    /* ------------------------------------------------------------------ */
-
+    /*  Build JSON payload  */
     private function buildPayload(
         string $puuid,
         string $region,
