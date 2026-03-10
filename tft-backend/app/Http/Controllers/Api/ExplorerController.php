@@ -118,38 +118,44 @@ class ExplorerController extends Controller
         ]);
     }
 
-    /*  Item Combinations (BiS for first selected unit) */
+    /*  Item Combinations (BiS for ALL selected units) */
     private function tabItemCombinations($baseQuery, array $units, int $minGames): array
     {
-        $primaryUnit = $units[0]['id'] ?? null;
+        $allResults = [];
 
-        if (!$primaryUnit) {
-            return [];
+        foreach ($units as $unitSpec) {
+            $unitId = $unitSpec['id'] ?? null;
+            if (!$unitId) continue;
+
+            $rows = DB::query()
+                ->fromSub($baseQuery, 'base')
+                ->join('participant_units as pu', function ($join) use ($unitId) {
+                    $join->on('pu.participant_id', '=', 'base.participant_id')
+                         ->where('pu.character_id', $unitId);
+                })
+                ->select(
+                    DB::raw('? as unit_id'),
+                    'pu.item_1',
+                    'pu.item_2',
+                    'pu.item_3',
+                    DB::raw('COUNT(*) as games_played'),
+                    DB::raw('ROUND(AVG(base.placement), 2) as avg_placement'),
+                    DB::raw('ROUND(100.0 * SUM(CASE WHEN base.placement <= 4 THEN 1 ELSE 0 END) / COUNT(*), 1) as top4_rate')
+                )
+                ->addBinding($unitId, 'select')
+                ->groupBy('pu.item_1', 'pu.item_2', 'pu.item_3')
+                ->havingRaw('COUNT(*) >= ?', [$minGames])
+                ->orderBy('avg_placement', 'asc')
+                ->orderByDesc('games_played')
+                ->limit(50)
+                ->get();
+
+            foreach ($rows as $row) {
+                $allResults[] = $row;
+            }
         }
 
-        $results = DB::query()
-            ->fromSub($baseQuery, 'base')
-            ->join('participant_units as pu', function ($join) use ($primaryUnit) {
-                $join->on('pu.participant_id', '=', 'base.participant_id')
-                     ->where('pu.character_id', $primaryUnit);
-            })
-            ->select(
-                'pu.item_1',
-                'pu.item_2',
-                'pu.item_3',
-                DB::raw('COUNT(*) as games_played'),
-                DB::raw('ROUND(AVG(base.placement), 2) as avg_placement'),
-                DB::raw('ROUND(100.0 * SUM(CASE WHEN base.placement <= 4 THEN 1 ELSE 0 END) / COUNT(*), 1) as top4_rate')
-            )
-            ->groupBy('pu.item_1', 'pu.item_2', 'pu.item_3')
-            ->havingRaw('COUNT(*) >= ?', [$minGames])
-            ->orderBy('avg_placement', 'asc')
-            ->orderByDesc('games_played')
-            ->limit(50)
-            ->get()
-            ->toArray();
-
-        return $results;
+        return $allResults;
     }
 
     /*  Trait Stats (co-occurring traits) */
@@ -178,64 +184,81 @@ class ExplorerController extends Controller
         return $results;
     }
 
-    /*  Single Item Performance */
+    /*  Single Item Performance (ALL selected units) */
 
     private function tabSingleItems($baseQuery, array $units, int $minGames): array
     {
-        $primaryUnit = $units[0]['id'] ?? null;
+        $allResults = [];
 
-        if (!$primaryUnit) {
-            return [];
+        foreach ($units as $unitSpec) {
+            $unitId = $unitSpec['id'] ?? null;
+            if (!$unitId) continue;
+
+            $sub = DB::query()
+                ->fromSub($baseQuery, 'base')
+                ->join('participant_units as pu', function ($join) use ($unitId) {
+                    $join->on('pu.participant_id', '=', 'base.participant_id')
+                         ->where('pu.character_id', $unitId);
+                })
+                ->select(
+                    DB::raw('? as unit_id'),
+                    DB::raw('pu.item_1 as item_name'),
+                    'base.placement'
+                )
+                ->addBinding($unitId, 'select')
+                ->whereNotNull('pu.item_1')
+                ->unionAll(
+                    DB::query()
+                        ->fromSub($baseQuery, 'base2')
+                        ->join('participant_units as pu2', function ($join) use ($unitId) {
+                            $join->on('pu2.participant_id', '=', 'base2.participant_id')
+                                 ->where('pu2.character_id', $unitId);
+                        })
+                        ->select(
+                            DB::raw('? as unit_id'),
+                            DB::raw('pu2.item_2 as item_name'),
+                            'base2.placement'
+                        )
+                        ->addBinding($unitId, 'select')
+                        ->whereNotNull('pu2.item_2')
+                )
+                ->unionAll(
+                    DB::query()
+                        ->fromSub($baseQuery, 'base3')
+                        ->join('participant_units as pu3', function ($join) use ($unitId) {
+                            $join->on('pu3.participant_id', '=', 'base3.participant_id')
+                                 ->where('pu3.character_id', $unitId);
+                        })
+                        ->select(
+                            DB::raw('? as unit_id'),
+                            DB::raw('pu3.item_3 as item_name'),
+                            'base3.placement'
+                        )
+                        ->addBinding($unitId, 'select')
+                        ->whereNotNull('pu3.item_3')
+                );
+
+            $rows = DB::query()
+                ->fromSub($sub, 'unpivoted')
+                ->select(
+                    'unpivoted.unit_id',
+                    'unpivoted.item_name',
+                    DB::raw('COUNT(*) as games_played'),
+                    DB::raw('ROUND(AVG(unpivoted.placement), 2) as avg_placement'),
+                    DB::raw('ROUND(100.0 * SUM(CASE WHEN unpivoted.placement <= 4 THEN 1 ELSE 0 END) / COUNT(*), 1) as top4_rate')
+                )
+                ->groupBy('unpivoted.unit_id', 'unpivoted.item_name')
+                ->havingRaw('COUNT(*) >= ?', [$minGames])
+                ->orderBy('avg_placement', 'asc')
+                ->orderByDesc('games_played')
+                ->limit(50)
+                ->get();
+
+            foreach ($rows as $row) {
+                $allResults[] = $row;
+            }
         }
 
-        $sub = DB::query()
-            ->fromSub($baseQuery, 'base')
-            ->join('participant_units as pu', function ($join) use ($primaryUnit) {
-                $join->on('pu.participant_id', '=', 'base.participant_id')
-                     ->where('pu.character_id', $primaryUnit);
-            })
-            ->select(
-                DB::raw('pu.item_1 as item_name'),
-                'base.placement'
-            )
-            ->whereNotNull('pu.item_1')
-            ->unionAll(
-                DB::query()
-                    ->fromSub($baseQuery, 'base2')
-                    ->join('participant_units as pu2', function ($join) use ($primaryUnit) {
-                        $join->on('pu2.participant_id', '=', 'base2.participant_id')
-                             ->where('pu2.character_id', $primaryUnit);
-                    })
-                    ->select(DB::raw('pu2.item_2 as item_name'), 'base2.placement')
-                    ->whereNotNull('pu2.item_2')
-            )
-            ->unionAll(
-                DB::query()
-                    ->fromSub($baseQuery, 'base3')
-                    ->join('participant_units as pu3', function ($join) use ($primaryUnit) {
-                        $join->on('pu3.participant_id', '=', 'base3.participant_id')
-                             ->where('pu3.character_id', $primaryUnit);
-                    })
-                    ->select(DB::raw('pu3.item_3 as item_name'), 'base3.placement')
-                    ->whereNotNull('pu3.item_3')
-            );
-
-        $results = DB::query()
-            ->fromSub($sub, 'unpivoted')
-            ->select(
-                'unpivoted.item_name',
-                DB::raw('COUNT(*) as games_played'),
-                DB::raw('ROUND(AVG(unpivoted.placement), 2) as avg_placement'),
-                DB::raw('ROUND(100.0 * SUM(CASE WHEN unpivoted.placement <= 4 THEN 1 ELSE 0 END) / COUNT(*), 1) as top4_rate')
-            )
-            ->groupBy('unpivoted.item_name')
-            ->havingRaw('COUNT(*) >= ?', [$minGames])
-            ->orderBy('avg_placement', 'asc')
-            ->orderByDesc('games_played')
-            ->limit(50)
-            ->get()
-            ->toArray();
-
-        return $results;
+        return $allResults;
     }
 }

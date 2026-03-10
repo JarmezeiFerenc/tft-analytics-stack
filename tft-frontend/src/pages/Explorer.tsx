@@ -14,6 +14,7 @@ interface UnitFilter {
 type TabId = 'items' | 'traits' | 'single_items';
 
 interface ItemComboRow {
+  unit_id: string;
   item_1: string | null;
   item_2: string | null;
   item_3: string | null;
@@ -32,6 +33,7 @@ interface TraitStatRow {
 }
 
 interface SingleItemRow {
+  unit_id: string;
   item_name: string;
   games_played: number;
   avg_placement: number;
@@ -285,7 +287,7 @@ function ItemPicker({
 
 /*  Tab components  */
 
-function ItemCombinationsTab({ rows, unitId }: { rows: ItemComboRow[]; unitId: string | null }) {
+function ItemCombinationsTab({ rows }: { rows: ItemComboRow[] }) {
   const { sorted, sortConfig, requestSort } = useSortableData(rows, { key: 'games_played', direction: 'desc' });
   if (rows.length === 0) return <EmptyTab />;
   return (
@@ -306,7 +308,7 @@ function ItemCombinationsTab({ rows, unitId }: { rows: ItemComboRow[]; unitId: s
               <tr key={i} className="border-b border-zinc-800/50 last:border-b-0 hover:bg-zinc-800/30">
                 <td className="px-4 py-2.5">
                   <div className="flex items-center gap-2">
-                    {unitId && <TftUnitImage apiName={unitId} className="h-8 w-8 rounded-lg border border-[#d4af37] object-cover" />}
+                    {r.unit_id && <TftUnitImage apiName={r.unit_id} className="h-8 w-8 rounded-lg border border-[#d4af37] object-cover" />}
                     {items.length > 0 ? (
                       <div className="flex gap-1.5">
                         {items.map((id, j) => (
@@ -366,7 +368,7 @@ function TraitStatsTab({ rows }: { rows: TraitStatRow[] }) {
   );
 }
 
-function SingleItemsTab({ rows, unitId }: { rows: SingleItemRow[]; unitId: string | null }) {
+function SingleItemsTab({ rows }: { rows: SingleItemRow[] }) {
   const { sorted, sortConfig, requestSort } = useSortableData(rows, { key: 'games_played', direction: 'desc' });
   if (rows.length === 0) return <EmptyTab />;
   return (
@@ -385,7 +387,7 @@ function SingleItemsTab({ rows, unitId }: { rows: SingleItemRow[]; unitId: strin
             <tr key={i} className="border-b border-zinc-800/50 last:border-b-0 hover:bg-zinc-800/30">
               <td className="px-4 py-2.5">
                 <div className="flex items-center gap-2">
-                  {unitId && <TftUnitImage apiName={unitId} className="h-8 w-8 rounded-lg border border-[#d4af37] object-cover" />}
+                  {r.unit_id && <TftUnitImage apiName={r.unit_id} className="h-8 w-8 rounded-lg border border-[#d4af37] object-cover" />}
                   <TftItemImage apiName={r.item_name} className="h-8 w-8 rounded-md border border-zinc-600 object-cover" />
                   <span className="text-zinc-200">{r.item_name.replace(/^TFT\d+_Item_|^TFT_Item_/i, '')}</span>
                 </div>
@@ -426,7 +428,7 @@ export default function Explorer() {
 
   const [selectedTraits, setSelectedTraits] = useState<string[]>([]);
   const [selectedUnits, setSelectedUnits] = useState<UnitFilter[]>([]);
-  const [minGames, setMinGames] = useState(1);
+  const [minGames, setMinGames] = useState(10);
 
   const [activeTab, setActiveTab] = useState<TabId>('items');
   const [itemRows, setItemRows] = useState<ItemComboRow[]>([]);
@@ -701,9 +703,9 @@ export default function Explorer() {
         )}
 
         {/* Tab content */}
-        {!loading && activeTab === 'items' && <ItemCombinationsTab rows={itemRows} unitId={selectedUnits[0]?.id ?? null} />}
+        {!loading && activeTab === 'items' && <ItemCombinationsTab rows={itemRows} />}
         {!loading && activeTab === 'traits' && <TraitStatsTab rows={traitRows} />}
-        {!loading && activeTab === 'single_items' && <SingleItemsTab rows={singleRows} unitId={selectedUnits[0]?.id ?? null} />}
+        {!loading && activeTab === 'single_items' && <SingleItemsTab rows={singleRows} />}
       </main>
     </div>
   );
