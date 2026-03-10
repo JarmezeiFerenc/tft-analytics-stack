@@ -1,5 +1,5 @@
-import { useTftAssets } from '../context/TftAssetContext';
-import { PLACEHOLDER_URL } from '../utils/cdragon';
+import { useTftAssets } from '../../context/TftAssetContext';
+import { PLACEHOLDER_URL } from '../../utils/cdragon';
 
 interface TftTraitIconProps {
   apiName: string;

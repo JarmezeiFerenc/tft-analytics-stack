@@ -120,7 +120,8 @@ export default function HomePage() {
           Open source project focused on TFT data integrity and deep-dive analytics.
         </p>
         <a
-          href="#"
+          href="https://github.com/JarmezeiFerenc/tft-analytics-stack"
+          target='_blank'
           className="inline-flex items-center gap-2 rounded-md border border-zinc-700 bg-zinc-900 px-3 py-1.5 text-xs font-medium text-zinc-200 transition hover:border-zinc-500 hover:text-white"
         >
           GitHub

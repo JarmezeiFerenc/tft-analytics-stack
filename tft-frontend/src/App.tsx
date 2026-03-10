@@ -2,9 +2,9 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import Layout from './components/Layout';
 import HomePage from './pages/HomePage';
 import Explorer from './pages/Explorer';
-import CompStats from './pages/CompStats';
 import Leaderboard from './pages/Leaderboard';
 import PlayerProfile from './pages/PlayerProfile';
+import UnitStatsPage from './pages/UnitStatsPage';
 
 export default function App() {
   return (
@@ -13,7 +13,7 @@ export default function App() {
         <Route element={<Layout />}>
           <Route path="/" element={<HomePage />} />
           <Route path="/explorer" element={<Explorer />} />
-          <Route path="/stats" element={<CompStats />} />
+          <Route path="/unit-stats" element={<UnitStatsPage />} />
           <Route path="/ranking" element={<Leaderboard />} />
           <Route path="/player" element={<PlayerProfile />} />
           <Route path="/player/:region/:gameName/:tagline" element={<PlayerProfile />} />

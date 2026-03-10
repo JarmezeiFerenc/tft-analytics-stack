@@ -13,6 +13,7 @@ Route::get('/user', function (Request $request) {
 })->middleware('auth:sanctum');
 
 Route::get('/matches', [MatchController::class, 'index']);
+Route::get('/units/stats', [UnitController::class, 'getAggregatedUnitStats']);
 Route::get('/unit-stats/{character_id}', [UnitController::class, 'getUnitStats']);
 Route::get('/leaderboard', [LeaderboardController::class, 'index']);
 Route::get('/player/{region}/{gameName}/{tagline}', [PlayerProfileController::class, 'show']);

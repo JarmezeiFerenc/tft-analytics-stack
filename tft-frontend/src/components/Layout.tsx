@@ -1,10 +1,10 @@
-import { BarChart2, Home, Search, Trophy, User } from 'lucide-react';
+import { BarChart3, Home, Search, Trophy, User } from 'lucide-react';
 import { NavLink, Outlet } from 'react-router-dom';
 
 const navigation = [
   { to: '/', label: 'Home', icon: Home },
   { to: '/explorer', label: 'Explorer', icon: Search },
-  { to: '/stats', label: 'Comp Stats', icon: BarChart2 },
+  { to: '/unit-stats', label: 'Unit Stats', icon: BarChart3 },
   { to: '/ranking', label: 'Leaderboard', icon: Trophy },
   { to: '/player', label: 'Player Profile', icon: User },
 ];

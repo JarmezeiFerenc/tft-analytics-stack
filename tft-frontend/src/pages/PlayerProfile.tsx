@@ -1,9 +1,9 @@
 import { ChevronDown, Clock, Loader2, Search, Shield, User } from 'lucide-react';
 import { useState } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
-import { TftUnitImage } from '../components/TftUnitImage';
-import { TftItemImage } from '../components/TftItemImage';
-import { TftTraitIcon } from '../components/TftTraitIcon';
+import { TftUnitImage } from '../components/shared/TftUnitImage';
+import { TftItemIcon as TftItemImage } from '../components/shared/TftItemIcon';
+import { TftTraitIcon } from '../components/shared/TftTraitIcon';
 import { PlacementChart } from '../components/PlacementChart';
 
 interface ProfileData {
@@ -332,7 +332,7 @@ export default function PlayerProfile() {
             <input
               value={formName}
               onChange={(e) => setFormName(e.target.value)}
-              placeholder="Hide on bush"
+              placeholder="Dishsoap"
               className="w-full rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-2 text-zinc-100 outline-none ring-indigo-500/70 transition focus:ring"
             />
           </label>
@@ -342,7 +342,7 @@ export default function PlayerProfile() {
             <input
               value={formTag}
               onChange={(e) => setFormTag(e.target.value)}
-              placeholder="KR1"
+              placeholder="NA1"
               className="w-full rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-2 text-zinc-100 outline-none ring-indigo-500/70 transition focus:ring"
             />
           </label>

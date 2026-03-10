@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { TftItemImage } from '../components/TftItemImage';
-import { TftUnitImage } from '../components/TftUnitImage';
-import { TftTraitIcon } from '../components/TftTraitIcon';
+import { TftItemIcon as TftItemImage } from '../components/shared/TftItemIcon';
+import { TftUnitImage } from '../components/shared/TftUnitImage';
+import { TftTraitIcon } from '../components/shared/TftTraitIcon';
 import { useTftAssets } from '../context/TftAssetContext';
 import { ArrowDown, ArrowUp, ArrowUpDown, ChevronDown, Loader2, Search, Trash2, X } from 'lucide-react';
 

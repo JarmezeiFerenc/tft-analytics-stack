@@ -5,6 +5,8 @@ interface TftAssets {
     itemMap: Map<string, string>;
     unitMap: Map<string, string>;
     traitMap: Map<string, string>;
+    unitCostMap: Map<string, number>;
+    latestSetKey: string | null;
     ready: boolean;
 }
 
@@ -12,6 +14,8 @@ const TftAssetContext = createContext<TftAssets>({
     itemMap: new Map(),
     unitMap: new Map(),
     traitMap: new Map(),
+    unitCostMap: new Map(),
+    latestSetKey: null,
     ready: false,
 });
 
@@ -31,6 +35,7 @@ interface RawChampion {
     apiName?: string;
     tileIcon?: string;
     icon?: string;
+    cost?: number;
 }
 
 interface RawTrait {
@@ -48,11 +53,24 @@ interface RawMetadata {
     sets?: Record<string, RawSet>;
 }
 
+function getLatestSetKey(sets: Record<string, RawSet> | undefined): string | null {
+    if (!sets || typeof sets !== 'object') return null;
+
+    const latest = Object.keys(sets)
+        .map((key) => ({ key, value: Number(key) }))
+        .filter(({ value }) => Number.isFinite(value))
+        .sort((a, b) => b.value - a.value)[0];
+
+    return latest?.key ?? null;
+}
+
 export function TftAssetProvider({ children }: { children: ReactNode }) {
     const [assets, setAssets] = useState<TftAssets>({
         itemMap: new Map(),
         unitMap: new Map(),
         traitMap: new Map(),
+        unitCostMap: new Map(),
+        latestSetKey: null,
         ready: false,
     });
 
@@ -70,6 +88,8 @@ export function TftAssetProvider({ children }: { children: ReactNode }) {
                 const itemMap = new Map<string, string>();
                 const unitMap = new Map<string, string>();
                 const traitMap = new Map<string, string>();
+                const unitCostMap = new Map<string, number>();
+                const latestSetKey = getLatestSetKey(data.sets);
 
                 if (Array.isArray(data.items)) {
                     for (const item of data.items) {
@@ -81,9 +101,7 @@ export function TftAssetProvider({ children }: { children: ReactNode }) {
                     }
                 }
 
-                if (data.sets && typeof data.sets === 'object') {
-                    const setKeys = Object.keys(data.sets);
-                    const latestSetKey = setKeys.sort((a, b) => Number(b) - Number(a))[0];
+                if (latestSetKey && data.sets) {
                     const latestSet = data.sets[latestSetKey];
 
                     if (latestSet) {
@@ -93,6 +111,9 @@ export function TftAssetProvider({ children }: { children: ReactNode }) {
                                 const icon = champ.tileIcon ?? champ.icon;
                                 if (key && icon) {
                                     unitMap.set(key, cdragonAssetPathToPngUrl(icon));
+                                }
+                                if (key && typeof champ.cost === 'number') {
+                                    unitCostMap.set(key, champ.cost);
                                 }
                             }
                         }
@@ -107,7 +128,7 @@ export function TftAssetProvider({ children }: { children: ReactNode }) {
                     }
                 }
 
-                setAssets({ itemMap, unitMap, traitMap, ready: true });
+                setAssets({ itemMap, unitMap, traitMap, unitCostMap, latestSetKey, ready: true });
             })
             .catch((err) => {
                 console.error('Failed to load TFT asset metadata:', err);
