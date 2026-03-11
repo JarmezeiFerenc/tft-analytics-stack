@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Validator;
 class ExplorerController extends Controller
 {
     /**
-     * Dynamic TFT Explorer query endpoint.
+     * TFT Explorer query endpoint.
      *
      * Payload:
      * {
@@ -47,7 +47,7 @@ class ExplorerController extends Controller
         $units    = $request->input('units', []);
 
         $baseQuery = DB::table('match_participants as mp')
-            ->select('mp.id as participant_id', 'mp.placement');
+            ->select('mp.id as participant_id', 'mp.placement', 'mp.level');
 
         foreach ($traits as $i => $traitName) {
             $alias = "pt_{$i}";
@@ -90,12 +90,11 @@ class ExplorerController extends Controller
 
         $summaryRow = DB::query()
             ->fromSub($baseQuery, 'base')
-            ->join('match_participants as s_mp', 's_mp.id', '=', 'base.participant_id')
             ->selectRaw('COUNT(*) as total_games')
             ->selectRaw('ROUND(AVG(base.placement), 2) as avg_placement')
             ->selectRaw('ROUND(100.0 * SUM(CASE WHEN base.placement <= 4 THEN 1 ELSE 0 END) / COUNT(*), 1) as top4_rate')
             ->selectRaw('ROUND(100.0 * SUM(CASE WHEN base.placement  = 1 THEN 1 ELSE 0 END) / COUNT(*), 1) as win_rate')
-            ->selectRaw('ROUND(AVG(s_mp.level), 1) as avg_level')
+            ->selectRaw('ROUND(AVG(base.level), 1) as avg_level')
             ->first();
 
         $summary = $summaryRow ? (array) $summaryRow : [

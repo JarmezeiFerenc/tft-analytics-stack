@@ -74,10 +74,41 @@ export default function Explorer() {
     setSelectedUnits((prev) => prev.map((u) => (u.id === key ? updated : u)));
 
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const abortRef = useRef<AbortController | null>(null);
+  const lastPayloadKeyRef = useRef<string | null>(null);
+
+  const normalizedUnits = useMemo(
+    () =>
+      selectedUnits.map((u) => ({
+        id: u.id,
+        items: Array.from(new Set(u.items)).slice(0, 3),
+        itemCount: u.itemCount,
+      })),
+    [selectedUnits],
+  );
+
+  const requestPayload = useMemo(
+    () => ({
+      tab: activeTab,
+      traits: selectedTraits,
+      units: normalizedUnits,
+      min_games: minGames,
+    }),
+    [activeTab, selectedTraits, normalizedUnits, minGames],
+  );
 
   const fetchResults = useCallback(
-    async (tab: TabId, traits: string[], units: UnitFilter[], min: number) => {
+    async (payload: { tab: TabId; traits: string[]; units: UnitFilter[]; min_games: number }) => {
+      const { tab, units } = payload;
       if (units.length === 0) return;
+
+      const payloadKey = JSON.stringify(payload);
+      if (lastPayloadKeyRef.current === payloadKey) return;
+      lastPayloadKeyRef.current = payloadKey;
+
+      abortRef.current?.abort();
+      const controller = new AbortController();
+      abortRef.current = controller;
 
       setLoading(true);
       setError(null);
@@ -86,7 +117,8 @@ export default function Explorer() {
         const resp = await fetch(`${API_BASE}/explorer`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-          body: JSON.stringify({ tab, traits, units, min_games: min }),
+          body: payloadKey,
+          signal: controller.signal,
         });
 
         if (!resp.ok) {
@@ -102,9 +134,14 @@ export default function Explorer() {
         else if (tab === 'traits') setTraitRows(results as TraitStatRow[]);
         else setSingleRows(results as SingleItemRow[]);
       } catch (err) {
+        if (err instanceof DOMException && err.name === 'AbortError') {
+          return;
+        }
         setError(err instanceof Error ? err.message : 'Unknown error');
       } finally {
-        setLoading(false);
+        if (abortRef.current === controller) {
+          setLoading(false);
+        }
       }
     },
     [],
@@ -116,18 +153,28 @@ export default function Explorer() {
       setTraitRows([]);
       setSingleRows([]);
       setSummary(null);
+      setLoading(false);
+      setError(null);
+      lastPayloadKeyRef.current = null;
+      abortRef.current?.abort();
       return;
     }
 
     if (timerRef.current) clearTimeout(timerRef.current);
     timerRef.current = setTimeout(() => {
-      fetchResults(activeTab, selectedTraits, selectedUnits, minGames);
+      fetchResults(requestPayload);
     }, DEBOUNCE_MS);
 
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
     };
-  }, [activeTab, selectedTraits, selectedUnits, minGames, fetchResults]);
+  }, [selectedUnits.length, requestPayload, fetchResults]);
+
+  useEffect(() => {
+    return () => {
+      abortRef.current?.abort();
+    };
+  }, []);
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
 

@@ -1,9 +1,10 @@
-import { BarChart3, Home, Search, Trophy, User } from 'lucide-react';
+import { BarChart3, Home, LayoutGrid, Search, Trophy, User } from 'lucide-react';
 import { NavLink, Outlet } from 'react-router-dom';
 
 const navigation = [
   { to: '/', label: 'Home', icon: Home },
   { to: '/explorer', label: 'Explorer', icon: Search },
+  { to: '/team-planner', label: 'Team Planner', icon: LayoutGrid },
   { to: '/unit-stats', label: 'Unit Stats', icon: BarChart3 },
   { to: '/ranking', label: 'Leaderboard', icon: Trophy },
   { to: '/player', label: 'Player Profile', icon: User },
@@ -51,7 +52,7 @@ export default function Layout() {
       </main>
 
       <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-zinc-800 bg-zinc-900/75 px-2 py-2 backdrop-blur-md lg:hidden">
-        <div className="grid grid-cols-5 gap-1">
+        <div className="grid grid-cols-6 gap-1">
           {navigation.map((item) => {
             const Icon = item.icon;
             return (

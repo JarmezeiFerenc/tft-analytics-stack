@@ -25,7 +25,7 @@ export function ItemSelectorDropdown({ allItems, selected, onSelect }: ItemSelec
       entries={explorerItems}
       selected={selected}
       onSelect={onSelect}
-      placeholder="Pin an item..."
+      placeholder="Pick an item..."
       renderOption={(key) => (
         <>
           <TftItemImage apiName={key} className="h-5 w-5 rounded object-cover" />

@@ -4,6 +4,7 @@ import HomePage from './pages/HomePage';
 import Explorer from './pages/Explorer';
 import Leaderboard from './pages/Leaderboard';
 import PlayerProfile from './pages/PlayerProfile';
+import TeamPlannerPage from './pages/TeamPlannerPage';
 import UnitStatsPage from './pages/UnitStatsPage';
 
 export default function App() {
@@ -13,6 +14,7 @@ export default function App() {
         <Route element={<Layout />}>
           <Route path="/" element={<HomePage />} />
           <Route path="/explorer" element={<Explorer />} />
+          <Route path="/team-planner" element={<TeamPlannerPage />} />
           <Route path="/unit-stats" element={<UnitStatsPage />} />
           <Route path="/ranking" element={<Leaderboard />} />
           <Route path="/player" element={<PlayerProfile />} />

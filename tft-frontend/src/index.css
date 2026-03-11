@@ -4,6 +4,8 @@
 
 :root {
   font-family: 'Rajdhani', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  --hex-w: 4.2rem;
+  --hex-h: calc(var(--hex-w) * 1.1547); 
 }
 
 html,
@@ -19,4 +21,49 @@ body {
   background-image:
     radial-gradient(50rem 30rem at 120% -10%, rgba(99, 102, 241, 0.12), transparent),
     radial-gradient(40rem 24rem at -10% 110%, rgba(99, 102, 241, 0.09), transparent);
+}
+
+@layer components {
+  .hex-clip {
+    clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+  }
+
+  .hex-slot {
+    width: var(--hex-w);
+    height: var(--hex-h);
+    filter: drop-shadow(0 0 1px rgba(161, 161, 170, 0.35));
+  }
+
+  .hex-grid {
+    display: inline-flex;
+    flex-direction: column;
+  }
+
+  .hex-row {
+    display: flex;
+  }
+
+  .hex-slot + .hex-slot {
+    margin-left: 8px; 
+  }
+
+  .hex-row + .hex-row {
+    margin-top: calc(var(--hex-h) * -0.15);
+  }
+
+  .hex-row-offset {
+    margin-left: calc(var(--hex-w) * 0.5 + 1px);
+  }
+}
+
+@media (min-width: 640px) {
+  :root {
+    --hex-w: 5.5rem;
+  }
+}
+
+@media (min-width: 1280px) {
+  :root {
+    --hex-w: 6rem;
+  }
 }
