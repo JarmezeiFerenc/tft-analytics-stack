@@ -5,7 +5,7 @@ import { UnitStatsTierSection } from '../components/unit-stats/UnitStatsTierSect
 import type { UnitStatsApiRow, UnitStatsRow } from '../components/unit-stats/types';
 import { useTftAssets } from '../context/TftAssetContext';
 
-const API_BASE = 'http://localhost:8000/api';
+const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000/api';
 const COST_TIERS = [5, 4, 3, 2, 1] as const;
 
 function formatUnitName(unitId: string): string {

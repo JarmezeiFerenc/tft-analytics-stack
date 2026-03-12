@@ -6,7 +6,7 @@ import { PlayerProfileCard } from '../components/player-profile/PlayerProfileCar
 import { PlayerProfileSearchHeader } from '../components/player-profile/PlayerProfileSearchHeader';
 import type { ApiResponse, RegionOption } from '../components/player-profile/types';
 
-const API_BASE = 'http://localhost:8000/api';
+const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000/api';
 
 const REGION_OPTIONS: RegionOption[] = [
   { label: 'EUNE', value: 'eun1' },

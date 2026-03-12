@@ -1,187 +1,206 @@
 # TFT Analytics Stack
 
-This repo is my personal TFT analysis pipeline.
-I built it because I wanted to inspect my own matches with query depth similar to Tactics.tools and MetaTFT, but with filters that I can define and change myself.
+I built this because I wanted full control over how TFT match data is collected, normalized, queried, and visualized.
 
-## The Problem
+Public tools are good at broad dashboards. They are not good at letting me ask very specific questions over a local dataset, re-run the pipeline when the meta shifts, and change the query model without waiting on someone else's product decisions.
 
-I wanted a way to analyze my own matches with the same depth as MetaTFT, but with more custom filters.
+This repo is split into three parts:
 
-Most public tools optimize for generic dashboards. I needed:
-- deterministic filtering over exact unit + item + trait combinations
-- a local dataset I can re-mine when patches change the meta
-- full control over what is indexed and how rows are grouped
-
-## Solution Overview
-
-I split the project into 3 parts:
-- `tft-miner`: pulls Riot data and writes normalized match tables
-- `tft-backend`: serves query endpoints over mined data
-- `tft-frontend`: UI for profile, match history, leaderboard, and explorer
-
-Data flow:
-1. `crawler.py` collects match IDs into `matches_queue`.
-2. `miner.py` consumes the queue and writes `matches`, `match_participants`, `participant_traits`, `participant_units`.
-3. Laravel APIs expose query endpoints.
-4. React pages render filtered views.
+- `tft-miner`: Riot API ingestion and relational data processing
+- `tft-backend`: Laravel API over the mined dataset
+- `tft-frontend`: React UI for profile views, leaderboard, explorer, and planner work
 
 ## Technical Deep Dive
 
-### Asset Context (CDragon `.tex` -> `.png`)
+### Data Pipeline Ecosystem
 
-Riot/CDragon metadata contains icon paths that are not directly usable as browser image URLs in all cases. On top of that, naming conventions between the Riot Match API and CDragon are inconsistent. Units often have set-specific prefixes (e.g., `TFT16_Aatrox`), while items use generic IDs (`TFT_Item_BrambleVest`) or entirely different schemas for augments.
+I keep the pipeline split into three background processes because they solve different problems and they fail in different ways.
 
-I normalize this in the frontend asset context (`tft-frontend/src/context/TftAssetContext.tsx`) and convert asset paths through `cdragonAssetPathToPngUrl(...)`.
+`crawler.py`
 
-What this gives me:
-- one lookup map per asset type (`itemMap`, `unitMap`, `traitMap`) that acts as a bridge between Match API IDs and CDragon visual assets
-- consistent lowercase keying to safely handle API naming anomalies and strip redundant prefixes
-- a single conversion point instead of scattered string hacks in UI components
+- Calls Riot endpoints for ranked players and match history.
+- Pulls raw match IDs and writes them into `matches_queue`.
+- Treats collection as an ingestion problem, not a stats problem.
 
-I load `https://raw.communitydragon.org/latest/cdragon/tft/en_us.json`, pick the latest set, and hydrate maps once in context.
+`miner.py`
 
-### Explorer Backend (why subqueries over joins)
+- Consumes queued match IDs.
+- Fetches full match payloads.
+- Normalizes the response into relational tables such as `matches`, `match_participants`, `participant_traits`, and `participant_units`.
+- Does the heavy lifting once so the API does not have to rebuild aggregates on every request.
 
-The Explorer endpoint (`tft-backend/app/Http/Controllers/Api/ExplorerController.php`) uses `whereExists` subqueries to build the base participant filter.
+`update_ranks.py`
 
-I chose subqueries over large multi-join filters because:
-- joins with many unit/trait/item constraints can multiply rows and force extra dedup logic
-- each `whereExists` clause behaves like a boolean predicate on a participant row, which maps directly to the filter semantics
-- it keeps "must include this trait/unit/item" constraints composable without exploding the join graph
+- Syncs current LP and challenger entry data into `player_league_entries`.
+- Keeps rank data fresh independently of the slower match-ingestion cycle.
 
-After the base participant set is defined, I aggregate tabs (`items`, `traits`, `single_items`) from `fromSub($baseQuery, 'base')`.
-That gives predictable grouping and easier SQL reasoning when I tune performance.
+I do not run this work inside normal web requests for a reason. Riot calls are rate-limited, match payloads are large, and the transformation logic is not cheap. If I tried to fetch, normalize, and aggregate that data on-demand during HTTP requests, I would get slower APIs, harder failure recovery, and no clean way to reprocess historical data after schema or balance changes.
 
+This split gives me three useful properties:
 
-## Run Locally
+- ingestion can be retried independently
+- mining can be tuned for throughput and idempotency
+- rank sync can run on its own cadence without blocking analytics work
 
-### 1. Prerequisites
+### Team Planner
 
-- Node.js 20+
-- PHP 8.2+
-- Composer 2+
-- Python 3.11+
-- MySQL 8+
+I chose `@dnd-kit/core` instead of standard HTML5 drag-and-drop because I needed predictable pointer-level control inside a custom board layout.
 
-### 2. Create the database
+The HTML5 API is fine for file drops and simple list reordering. It is not a good fit when the drag surface is a stylized game board with custom overlays, mobile support concerns, and drop logic that needs to stay under my control. `@dnd-kit/core` gives me that control directly through sensors, overlays, and collision strategies.
 
-Create a MySQL database named `tft_data`.
+The hard part was not the drag token itself. The hard part was the mismatch between the geometry I render and the geometry the browser actually uses for hit testing. The board is presented as interlocking CSS hexagons, but the DOM still reasons about rectangles. That means I had to tune board spacing, row offsets, and collision behavior so drag intent feels correct even though the visible board is hexagonal and the pointer math underneath is not.
 
-Example SQL:
+On state management, I took the pragmatic route. The current planner keeps a single canonical board state at the page boundary and passes only the minimum data needed into board and pool components. That avoids spraying transient drag state through the whole tree. If the planner grows into persisted comps, route-level sharing, or collaborative state, Zustand is the next extraction I would make. Right now I do not need a global store just to feel architecturally pure.
 
-```sql
-CREATE DATABASE tft_data CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-```
+## Self-Correction & Refactoring
 
-Important: the Python miner currently has DB config hardcoded in code (`tft-miner/crawler.py`, `tft-miner/miner.py`) as:
-- host: `127.0.0.1`
-- user: `root`
-- password: empty
-- database: `tft_data`
+One recent bottleneck was the Explorer.
 
-If your local credentials differ, edit `DB_CONFIG` in those files.
+The UI started feeling laggy, and the backend responses were drifting into the kind of latency that makes a filter-heavy tool annoying to use. The underlying issue was not one bug. It was a stack of smaller problems.
 
-### 3. Backend setup (`tft-backend`)
+On the frontend, I had let too much behavior accumulate inside large React components. I broke those views down so render boundaries were clearer and easier to reason about. I also fixed a silent debounce problem where effect timing and request state could interact badly enough to cause redundant fetches and feedback loops. The current explorer flow is explicit about request timing and abort behavior instead of hoping React timing will save it.
 
-```bash
-cd tft-backend
-composer install
-cp .env.example .env
-php artisan key:generate
-```
+On the backend, I stopped pretending generic indexes were enough for compound analytics filters. Explorer queries are built around combinations of participant, unit, trait, and item predicates, so I added the indexes the workload actually needed. That includes composite B-Tree indexes such as:
 
-Then edit `.env`:
-- set DB to mysql
-- set `DB_HOST`, `DB_PORT`, `DB_DATABASE=tft_data`, `DB_USERNAME`, `DB_PASSWORD`
-- set `RIOT_API_KEY=...`
-- optional local SSL workaround: `RIOT_HTTP_VERIFY=false`
+- `participant_units(character_id, item_1)`
+- `participant_units(character_id, item_2)`
+- `participant_units(character_id, item_3)`
+- `participant_units(participant_id, character_id)`
+- `participant_traits(name, tier_current, participant_id)`
 
-Run migrations:
+That changed the query profile materially. Requests that were taking seconds under filter-heavy explorer workloads dropped into millisecond territory once the planner, filter semantics, and index design were aligned with the actual access patterns.
 
-```bash
-php artisan migrate
-```
+## Local Operations (Docker Setup)
 
-Start backend:
+### Rules
+
+- I use one root `.env` file for the entire stack.
+- I do not keep separate `.env` files inside backend, frontend, or miner.
+- Docker Compose injects the required values into each service.
+
+### Prerequisites
+
+- Docker Desktop with Compose enabled
+- A valid `RIOT_API_KEY` in the root `.env`
+
+### First-Time Setup
+
+The repo already contains the single root `.env`. Start by reviewing it and replacing the Riot key if needed, then build the stack.
 
 ```bash
-php artisan serve
+docker compose up -d --build
+docker compose exec backend composer install
+docker compose exec frontend npm install
+docker compose exec backend php artisan migrate
 ```
 
-### 4. Frontend setup (`tft-frontend`)
+What this does:
+
+- builds the MySQL, Laravel, React, and Python images
+- starts MySQL and imports `init.sql.gz` on first boot
+- starts Laravel on `http://localhost:8000`
+- starts Vite on `http://localhost:3000`
+- applies database migrations against the MySQL container
+
+### Daily Run
+
+If the images are already built, this is enough:
 
 ```bash
-cd tft-frontend
-npm install
-npm run dev
+docker compose up -d
 ```
 
-### 5. Miner setup (`tft-miner`)
+That starts:
 
-Create and activate virtualenv:
+- MySQL on `localhost:3307`
+- Laravel on `localhost:8000`
+- the frontend Vite dev server on `localhost:3000`
+
+If I stop the stack for the day:
 
 ```bash
-cd tft-miner
-python -m venv .venv
-# Windows PowerShell
-.\.venv\Scripts\Activate.ps1
+docker compose down
 ```
 
-Install deps (if `requirements.txt` is empty in your branch, install directly):
+If I need a clean rebuild after dependency or Dockerfile changes:
 
 ```bash
-pip install requests mysql-connector-python python-dotenv
+docker compose up -d --build --force-recreate
 ```
 
-Create `tft-miner/.env` with:
+### Running the Pipeline Manually
 
-```env
-RIOT_API_KEY=your_riot_api_key
-```
+The default `miner` service runs `update_ranks.py`. I keep crawler and miner worker as explicit one-shot jobs so I can trigger them manually when I want to refresh data.
 
-### 6. Initial data bootstrap (order matters)
-
-1. Crawl match IDs into queue:
+Run the crawler:
 
 ```bash
-cd tft-miner
-python .\crawler.py
+docker compose --profile jobs run --rm crawler
 ```
 
-2. Mine queued matches into normalized tables:
+Run the miner:
 
 ```bash
-python .\miner.py
+docker compose --profile jobs run --rm miner-worker
 ```
 
-3. Sync ranked entries used by leaderboard/profile:
+Run the rank updater:
 
 ```bash
-python .\update_ranks.py
+docker compose run --rm miner
 ```
 
-The first full run takes time because of Riot rate limiting.
-
-### 7. Daily refresh workflow
-
-When I want fresh data, I rerun:
+If I want to run the full pipeline in sequence:
 
 ```bash
-cd tft-miner
-python .\crawler.py
-python .\miner.py
-python .\update_ranks.py
+docker compose --profile jobs run --rm crawler
+docker compose --profile jobs run --rm miner-worker
+docker compose run --rm miner
 ```
 
-## API surface (current)
+### Useful Service Commands
+
+Open a shell in the backend container:
+
+```bash
+docker compose exec backend sh
+```
+
+Open a shell in the frontend container:
+
+```bash
+docker compose exec frontend sh
+```
+
+Open a shell in the Python image:
+
+```bash
+docker compose run --rm miner sh
+```
+
+Tail logs:
+
+```bash
+docker compose logs -f backend
+docker compose logs -f frontend
+docker compose logs -f db
+```
+
+## API Surface
 
 - `GET /api/leaderboard`
 - `GET /api/player/{region}/{gameName}/{tagline}`
 - `POST /api/explorer`
 - `GET /api/matches`
+- `GET /api/units/stats`
 
 ## Notes
 
-- Riot API keys expire; if requests suddenly fail, refresh the key first.
-- Explorer queries are only as good as the local mined sample size.
-- If profile sync fails with SSL issues in local dev, use CA bundle config or `RIOT_HTTP_VERIFY=false`.
+- Riot API keys expire. If the pipeline suddenly starts failing, I check the key first.
+- Explorer output is only as useful as the current local sample size.
+- The MySQL import from `init.sql.gz` only happens on the first database initialization. If I need to re-import from scratch, I remove the volume and boot again.
+
+```bash
+docker compose down -v
+docker compose up -d --build
+```

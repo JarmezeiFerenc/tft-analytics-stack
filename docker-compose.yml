@@ -1,0 +1,135 @@
+services:
+  db:
+    image: mysql:8.0
+    container_name: tft-db
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: ${DB_DATABASE}
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+      MYSQL_ALLOW_EMPTY_PASSWORD: ${MYSQL_ALLOW_EMPTY_PASSWORD}
+    ports:
+      - "3307:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+      - ./init.sql.gz:/docker-entrypoint-initdb.d/init.sql.gz:ro
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -u root --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    networks:
+      - tft-network
+
+  backend:
+    build:
+      context: ./tft-backend
+      dockerfile: Dockerfile
+    container_name: tft-backend
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      APP_NAME: ${APP_NAME}
+      APP_ENV: ${APP_ENV}
+      APP_KEY: ${APP_KEY}
+      APP_DEBUG: ${APP_DEBUG}
+      APP_URL: ${APP_URL}
+      DB_CONNECTION: ${DB_CONNECTION}
+      DB_HOST: ${DB_HOST}
+      DB_PORT: ${DB_PORT}
+      DB_DATABASE: ${DB_DATABASE}
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      CACHE_STORE: ${CACHE_STORE}
+      QUEUE_CONNECTION: ${QUEUE_CONNECTION}
+      SESSION_DRIVER: ${SESSION_DRIVER}
+      SESSION_LIFETIME: ${SESSION_LIFETIME}
+      RIOT_API_KEY: ${RIOT_API_KEY}
+      RIOT_HTTP_VERIFY: ${RIOT_HTTP_VERIFY}
+    ports:
+      - "8000:8000"
+    networks:
+      - tft-network
+
+  frontend:
+    build:
+      context: ./tft-frontend
+      dockerfile: Dockerfile
+    container_name: tft-frontend
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_started
+    environment:
+      VITE_API_BASE_URL: ${VITE_API_BASE_URL}
+    ports:
+      - "3000:3000"
+    networks:
+      - tft-network
+
+  miner:
+    build:
+      context: ./tft-miner
+      dockerfile: Dockerfile
+    container_name: tft-miner
+    restart: "no"
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DB_HOST: ${DB_HOST}
+      DB_PORT: ${DB_PORT}
+      DB_DATABASE: ${DB_DATABASE}
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      RIOT_API_KEY: ${RIOT_API_KEY}
+    command: ["python", "update_ranks.py"]
+    networks:
+      - tft-network
+
+  crawler:
+    build:
+      context: ./tft-miner
+      dockerfile: Dockerfile
+    profiles: ["jobs"]
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DB_HOST: ${DB_HOST}
+      DB_PORT: ${DB_PORT}
+      DB_DATABASE: ${DB_DATABASE}
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      RIOT_API_KEY: ${RIOT_API_KEY}
+    command: ["python", "crawler.py"]
+    networks:
+      - tft-network
+
+  miner-worker:
+    build:
+      context: ./tft-miner
+      dockerfile: Dockerfile
+    profiles: ["jobs"]
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DB_HOST: ${DB_HOST}
+      DB_PORT: ${DB_PORT}
+      DB_DATABASE: ${DB_DATABASE}
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      RIOT_API_KEY: ${RIOT_API_KEY}
+    command: ["python", "miner.py"]
+    networks:
+      - tft-network
+
+volumes:
+  db_data:
+
+networks:
+  tft-network:
+    driver: bridge

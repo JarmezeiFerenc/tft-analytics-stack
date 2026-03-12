@@ -10,10 +10,11 @@ import requests
 from dotenv import load_dotenv
 
 DB_CONFIG = {
-    "host": "127.0.0.1",
-    "user": "root",
-    "password": "",
-    "database": "tft_data",
+    "host": os.getenv("DB_HOST", "127.0.0.1"),
+    "port": int(os.getenv("DB_PORT", "3306")),
+    "user": os.getenv("DB_USERNAME", "root"),
+    "password": os.getenv("DB_PASSWORD", ""),
+    "database": os.getenv("DB_DATABASE", "tft_data"),
 }
 
 REGIONS = ["eun1", "euw1", "na1", "kr", "br1"]

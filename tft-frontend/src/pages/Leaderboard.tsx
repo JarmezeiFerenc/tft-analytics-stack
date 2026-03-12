@@ -4,7 +4,7 @@ import { LeaderboardHeader } from '../components/leaderboard/LeaderboardHeader';
 import { LeaderboardTable } from '../components/leaderboard/LeaderboardTable';
 import type { LeaderboardRow, RegionOption } from '../components/leaderboard/types';
 
-const API_BASE = 'http://localhost:8000/api';
+const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000/api';
 
 const REGION_OPTIONS: RegionOption[] = [
   { label: 'Global', value: 'Global' },

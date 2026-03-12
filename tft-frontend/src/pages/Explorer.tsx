@@ -17,7 +17,7 @@ import type {
 } from '../components/explorer/types';
 import { useTftAssets } from '../context/TftAssetContext';
 
-const API_BASE = 'http://127.0.0.1:8000/api';
+const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000/api';
 const DEBOUNCE_MS = 600;
 const MIN_GAMES_OPTIONS = [10, 25, 50, 100, 300, 500, 1000, 3000] as const;
 
