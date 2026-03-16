@@ -8,6 +8,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
 use Throwable;
 
 class PlayerProfileController extends Controller
@@ -103,16 +104,11 @@ class PlayerProfileController extends Controller
 
     private function syncLeagueEntry(string $region, string $puuid, string $apiKey): ?array
     {
-        $url  = "https://{$region}.api.riotgames.com/tft/league/v1/entries/by-puuid/{$puuid}";
-        $data = $this->riot($url, $apiKey);
+        $entries = $this->fetchLeagueEntries($region, $puuid, $apiKey);
 
-        if (!$data || !is_array($data)) {
+        if ($entries === null) {
             return $this->storedLeagueEntry($region, $puuid);
         }
-
-        $entries = array_is_list($data)
-            ? $data
-            : ((isset($data['queueType']) && is_string($data['queueType'])) ? [$data] : []);
 
         $ranked = collect($entries)->first(
             fn ($entry) => is_array($entry)
@@ -120,24 +116,53 @@ class PlayerProfileController extends Controller
         );
 
         if (!$ranked) {
-            return $this->storedLeagueEntry($region, $puuid);
+            return null;
         }
 
+        $normalized = [
+            'tier' => (string) ($ranked['tier'] ?? 'UNRANKED'),
+            'rank' => (string) ($ranked['rank'] ?? ''),
+            'leaguePoints' => (int) ($ranked['leaguePoints'] ?? 0),
+            'wins' => (int) ($ranked['wins'] ?? 0),
+            'losses' => (int) ($ranked['losses'] ?? 0),
+            'queueType' => 'RANKED_TFT',
+        ];
+
         $now = now();
+        $payload = [
+            'tier'         => $normalized['tier'],
+            'leaguePoints' => $normalized['leaguePoints'],
+            'wins'         => $normalized['wins'],
+            'losses'       => $normalized['losses'],
+            'lastSyncedAt' => $now,
+            'updated_at'   => $now,
+            'created_at'   => $now,
+        ];
+
+        if (Schema::hasColumn('player_league_entries', 'rank')) {
+            $payload['rank'] = $normalized['rank'];
+        }
+
         DB::table('player_league_entries')->updateOrInsert(
             ['puuid' => $puuid, 'region' => $region, 'queueType' => 'RANKED_TFT'],
-            [
-                'tier'         => $ranked['tier'] ?? 'UNRANKED',
-                'leaguePoints' => $ranked['leaguePoints'] ?? 0,
-                'wins'         => $ranked['wins'] ?? 0,
-                'losses'       => $ranked['losses'] ?? 0,
-                'lastSyncedAt' => $now,
-                'updated_at'   => $now,
-                'created_at'   => $now,
-            ]
+            $payload
         );
 
-        return $ranked;
+        return $normalized;
+    }
+
+    private function fetchLeagueEntries(string $region, string $puuid, string $apiKey): ?array
+    {
+        $url = "https://{$region}.api.riotgames.com/tft/league/v1/by-puuid/{$puuid}";
+        $data = $this->riot($url, $apiKey);
+
+        if (!is_array($data)) {
+            return null;
+        }
+
+        return array_is_list($data)
+            ? $data
+            : ((isset($data['queueType']) && is_string($data['queueType'])) ? [$data] : []);
     }
 
     private function storedLeagueEntry(string $region, string $puuid): ?array
@@ -154,7 +179,7 @@ class PlayerProfileController extends Controller
 
         return [
             'tier' => (string) ($row->tier ?? 'UNRANKED'),
-            'rank' => '',
+            'rank' => property_exists($row, 'rank') ? (string) ($row->rank ?? '') : '',
             'leaguePoints' => (int) ($row->leaguePoints ?? 0),
             'wins' => (int) ($row->wins ?? 0),
             'losses' => (int) ($row->losses ?? 0),

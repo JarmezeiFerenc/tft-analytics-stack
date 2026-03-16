@@ -35,7 +35,7 @@ export function TeamPlannerPageSkeleton() {
                 <div className="h-5 w-16 animate-pulse rounded-md bg-zinc-800/90" />
                 <div className="h-3 w-8 animate-pulse rounded-full bg-zinc-700/70" />
               </div>
-              <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
+              <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-8">
                 {Array.from({ length: 6 }).map((__, unitIndex) => (
                   <div key={`planner-unit-skeleton-${tierIndex}-${unitIndex}`} className="rounded-lg border border-zinc-800 bg-zinc-950/60 p-1.5">
                     <div className="h-10 w-10 animate-pulse rounded-md bg-zinc-700/80" />

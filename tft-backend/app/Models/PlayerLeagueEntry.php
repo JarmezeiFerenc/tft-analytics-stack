@@ -13,6 +13,7 @@ class PlayerLeagueEntry extends Model
         'region',
         'queueType',
         'tier',
+        'rank',
         'leaguePoints',
         'wins',
         'losses',
