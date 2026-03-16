@@ -4,12 +4,15 @@ import { EmptyTab } from './EmptyTab';
 import { SortHeader } from './SortHeader';
 import type { SingleItemRow } from './types';
 import { useSortableData } from './useSortableData';
+import { useTftMetadata } from '../../context/TftAssetContext';
 
 interface SingleItemsTabProps {
   rows: SingleItemRow[];
 }
 
 export function SingleItemsTab({ rows }: SingleItemsTabProps) {
+  const { getItemName } = useTftMetadata();
+
   const { sorted, sortConfig, requestSort } = useSortableData(rows, {
     key: 'games_played',
     direction: 'desc',
@@ -64,7 +67,7 @@ export function SingleItemsTab({ rows }: SingleItemsTabProps) {
                     apiName={r.item_name}
                     className="h-8 w-8 rounded-md border border-zinc-600 object-cover"
                   />
-                  <span className="text-zinc-200">{r.item_name.replace(/^TFT\d+_Item_|^TFT_Item_/i, '')}</span>
+                  <span className="text-zinc-200">{getItemName(r.item_name)}</span>
                 </div>
               </td>
               <td className="px-4 py-2.5 text-zinc-300">{r.games_played}</td>

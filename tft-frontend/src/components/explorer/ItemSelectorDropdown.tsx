@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { useTftMetadata } from '../../context/TftAssetContext';
 import { TftItemIcon as TftItemImage } from '../shared/TftItemIcon';
 import { SearchableDropdown } from './SearchableDropdown';
 
@@ -15,6 +16,8 @@ function isBlockedExplorerItem(key: string): boolean {
 }
 
 export function ItemSelectorDropdown({ allItems, selected, onSelect }: ItemSelectorDropdownProps) {
+  const { getItemName } = useTftMetadata();
+
   const explorerItems = useMemo(
     () => allItems.filter((key) => key.startsWith('tft_item_') && !isBlockedExplorerItem(key)),
     [allItems],
@@ -29,7 +32,7 @@ export function ItemSelectorDropdown({ allItems, selected, onSelect }: ItemSelec
       renderOption={(key) => (
         <>
           <TftItemImage apiName={key} className="h-5 w-5 rounded object-cover" />
-          <span className="truncate">{key.replace(/^TFT\d+_Item_|^TFT_Item_/i, '')}</span>
+          <span className="truncate">{getItemName(key)}</span>
         </>
       )}
     />

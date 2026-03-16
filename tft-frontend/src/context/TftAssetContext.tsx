@@ -6,6 +6,12 @@ interface TftAssets {
     unitMap: Map<string, string>;
     traitMap: Map<string, string>;
     unitCostMap: Map<string, number>;
+    championNameMap: Map<string, string>;
+    itemNameMap: Map<string, string>;
+    traitNameMap: Map<string, string>;
+    getChampionName: (apiName: string) => string;
+    getItemName: (apiName: string) => string;
+    getTraitName: (apiName: string) => string;
     latestSetKey: string | null;
     ready: boolean;
 }
@@ -15,11 +21,21 @@ const TftAssetContext = createContext<TftAssets>({
     unitMap: new Map(),
     traitMap: new Map(),
     unitCostMap: new Map(),
+    championNameMap: new Map(),
+    itemNameMap: new Map(),
+    traitNameMap: new Map(),
+    getChampionName: (apiName: string) => formatApiNameFallback(apiName),
+    getItemName: (apiName: string) => formatApiNameFallback(apiName),
+    getTraitName: (apiName: string) => formatApiNameFallback(apiName),
     latestSetKey: null,
     ready: false,
 });
 
 export function useTftAssets() {
+    return useContext(TftAssetContext);
+}
+
+export function useTftMetadata() {
     return useContext(TftAssetContext);
 }
 
@@ -29,6 +45,7 @@ interface RawItem {
     apiName?: string;
     id?: string;
     icon?: string;
+    name?: string;
 }
 
 interface RawChampion {
@@ -36,11 +53,13 @@ interface RawChampion {
     tileIcon?: string;
     icon?: string;
     cost?: number;
+    name?: string;
 }
 
 interface RawTrait {
     apiName?: string;
     icon?: string;
+    name?: string;
 }
 
 interface RawSet {
@@ -51,6 +70,28 @@ interface RawSet {
 interface RawMetadata {
     items?: RawItem[];
     sets?: Record<string, RawSet>;
+}
+
+function normalizeApiName(apiName: string): string {
+    return apiName.trim().toLowerCase();
+}
+
+function formatApiNameFallback(apiName: string): string {
+    const trimmed = apiName.trim();
+    if (!trimmed) return 'Unknown';
+
+    const withoutTftPrefix = trimmed
+        .replace(/^TFT\d+_/i, '')
+        .replace(/^TFT_/i, '')
+        .replace(/^Item_/i, '');
+
+    const spaced = withoutTftPrefix
+        .replace(/_/g, ' ')
+        .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+        .replace(/\s+/g, ' ')
+        .trim();
+
+    return spaced || trimmed;
 }
 
 function getLatestSetKey(sets: Record<string, RawSet> | undefined): string | null {
@@ -64,12 +105,18 @@ function getLatestSetKey(sets: Record<string, RawSet> | undefined): string | nul
     return latest?.key ?? null;
 }
 
-export function TftAssetProvider({ children }: { children: ReactNode }) {
+export function TftMetadataProvider({ children }: { children: ReactNode }) {
     const [assets, setAssets] = useState<TftAssets>({
         itemMap: new Map(),
         unitMap: new Map(),
         traitMap: new Map(),
         unitCostMap: new Map(),
+        championNameMap: new Map(),
+        itemNameMap: new Map(),
+        traitNameMap: new Map(),
+        getChampionName: (apiName: string) => formatApiNameFallback(apiName),
+        getItemName: (apiName: string) => formatApiNameFallback(apiName),
+        getTraitName: (apiName: string) => formatApiNameFallback(apiName),
         latestSetKey: null,
         ready: false,
     });
@@ -89,14 +136,20 @@ export function TftAssetProvider({ children }: { children: ReactNode }) {
                 const unitMap = new Map<string, string>();
                 const traitMap = new Map<string, string>();
                 const unitCostMap = new Map<string, number>();
+                const championNameMap = new Map<string, string>();
+                const itemNameMap = new Map<string, string>();
+                const traitNameMap = new Map<string, string>();
                 const latestSetKey = getLatestSetKey(data.sets);
 
                 if (Array.isArray(data.items)) {
                     for (const item of data.items) {
-                        const key = (item.apiName ?? item.id ?? '').toLowerCase();
+                        const key = normalizeApiName(item.apiName ?? item.id ?? '');
                         const icon = item.icon;
                         if (key && icon) {
                             itemMap.set(key, cdragonAssetPathToPngUrl(icon));
+                        }
+                        if (key && item.name) {
+                            itemNameMap.set(key, item.name);
                         }
                     }
                 }
@@ -107,7 +160,7 @@ export function TftAssetProvider({ children }: { children: ReactNode }) {
                     if (latestSet) {
                         if (Array.isArray(latestSet.champions)) {
                             for (const champ of latestSet.champions) {
-                                const key = (champ.apiName ?? '').toLowerCase();
+                                const key = normalizeApiName(champ.apiName ?? '');
                                 const icon = champ.tileIcon ?? champ.icon;
                                 if (key && icon) {
                                     unitMap.set(key, cdragonAssetPathToPngUrl(icon));
@@ -115,20 +168,54 @@ export function TftAssetProvider({ children }: { children: ReactNode }) {
                                 if (key && typeof champ.cost === 'number') {
                                     unitCostMap.set(key, champ.cost);
                                 }
+                                if (key && champ.name) {
+                                    championNameMap.set(key, champ.name);
+                                }
                             }
                         }
                         if (Array.isArray(latestSet.traits)) {
                             for (const trait of latestSet.traits) {
-                                const key = (trait.apiName ?? '').toLowerCase();
+                                const key = normalizeApiName(trait.apiName ?? '');
                                 if (key && trait.icon) {
                                     traitMap.set(key, cdragonAssetPathToPngUrl(trait.icon));
+                                }
+                                if (key && trait.name) {
+                                    traitNameMap.set(key, trait.name);
                                 }
                             }
                         }
                     }
                 }
 
-                setAssets({ itemMap, unitMap, traitMap, unitCostMap, latestSetKey, ready: true });
+                const getChampionName = (apiName: string): string => {
+                    const normalized = normalizeApiName(apiName);
+                    return championNameMap.get(normalized) ?? formatApiNameFallback(apiName);
+                };
+
+                const getItemName = (apiName: string): string => {
+                    const normalized = normalizeApiName(apiName);
+                    return itemNameMap.get(normalized) ?? formatApiNameFallback(apiName);
+                };
+
+                const getTraitName = (apiName: string): string => {
+                    const normalized = normalizeApiName(apiName);
+                    return traitNameMap.get(normalized) ?? formatApiNameFallback(apiName);
+                };
+
+                setAssets({
+                    itemMap,
+                    unitMap,
+                    traitMap,
+                    unitCostMap,
+                    championNameMap,
+                    itemNameMap,
+                    traitNameMap,
+                    getChampionName,
+                    getItemName,
+                    getTraitName,
+                    latestSetKey,
+                    ready: true,
+                });
             })
             .catch((err) => {
                 console.error('Failed to load TFT asset metadata:', err);
@@ -145,3 +232,5 @@ export function TftAssetProvider({ children }: { children: ReactNode }) {
         </TftAssetContext.Provider>
     );
 }
+
+export const TftAssetProvider = TftMetadataProvider;

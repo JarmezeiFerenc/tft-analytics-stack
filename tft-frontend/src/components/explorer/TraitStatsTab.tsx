@@ -1,4 +1,5 @@
 import { TftTraitIcon } from '../shared/TftTraitIcon';
+import { useTftMetadata } from '../../context/TftAssetContext';
 import { EmptyTab } from './EmptyTab';
 import { SortHeader } from './SortHeader';
 import type { TraitStatRow } from './types';
@@ -9,6 +10,8 @@ interface TraitStatsTabProps {
 }
 
 export function TraitStatsTab({ rows }: TraitStatsTabProps) {
+  const { getTraitName } = useTftMetadata();
+
   const { sorted, sortConfig, requestSort } = useSortableData(rows, {
     key: 'games_played',
     direction: 'desc',
@@ -62,7 +65,7 @@ export function TraitStatsTab({ rows }: TraitStatsTabProps) {
               <td className="px-4 py-2.5">
                 <div className="flex items-center gap-2">
                   <TftTraitIcon apiName={r.trait_name} style={r.max_style} />
-                  <span className="text-zinc-200">{r.trait_name.replace(/^TFT\d+_/, '')}</span>
+                  <span className="text-zinc-200">{getTraitName(r.trait_name)}</span>
                 </div>
               </td>
               <td className="px-4 py-2.5 text-zinc-300">{r.avg_units}</td>

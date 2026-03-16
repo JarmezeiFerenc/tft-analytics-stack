@@ -1,4 +1,5 @@
 import { useDraggable } from '@dnd-kit/core';
+import { useTftMetadata } from '../../context/TftAssetContext';
 import { TftUnitImage } from '../shared/TftUnitImage';
 import type { DragUnitPayload, PlannerUnit } from './types';
 
@@ -18,10 +19,6 @@ const tierBorder: Record<number, string> = {
   5: 'border-amber-400/50 hover:border-amber-300/70',
 };
 
-function toName(unitId: string): string {
-  return unitId.replace(/^tft\d+_/i, '').replaceAll('_', ' ');
-}
-
 export function PlannerUnitToken({
   dragId,
   unit,
@@ -29,6 +26,8 @@ export function PlannerUnitToken({
   label,
   dragDisabled = false,
 }: PlannerUnitTokenProps) {
+  const { getChampionName } = useTftMetadata();
+
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: dragId,
     data,
@@ -61,7 +60,7 @@ export function PlannerUnitToken({
         <TftUnitImage apiName={unit.id} className="h-full w-full object-cover" />
       </div>
       <span className="min-w-0 truncate text-xs font-medium text-zinc-200">
-        {toName(unit.id)}
+        {getChampionName(unit.id)}
       </span>
     </button>
   );

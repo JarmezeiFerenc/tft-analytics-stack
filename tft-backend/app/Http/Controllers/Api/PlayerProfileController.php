@@ -60,8 +60,6 @@ class PlayerProfileController extends Controller
         }
     }
 
-    /*  Riot API helpers */
-
     private function riot(string $url, string $apiKey): ?array
     {
         $response = Http::withOptions($this->httpOptions())
@@ -269,7 +267,6 @@ class PlayerProfileController extends Controller
         });
     }
 
-    /*  Build JSON payload  */
     private function buildPayload(
         string $puuid,
         string $region,

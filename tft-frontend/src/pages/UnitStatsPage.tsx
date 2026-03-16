@@ -3,19 +3,13 @@ import { Loader2 } from 'lucide-react';
 import { UnitStatsHeader } from '../components/unit-stats/UnitStatsHeader';
 import { UnitStatsTierSection } from '../components/unit-stats/UnitStatsTierSection';
 import type { UnitStatsApiRow, UnitStatsRow } from '../components/unit-stats/types';
-import { useTftAssets } from '../context/TftAssetContext';
+import { useTftMetadata } from '../context/TftAssetContext';
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000/api';
 const COST_TIERS = [5, 4, 3, 2, 1] as const;
 
-function formatUnitName(unitId: string): string {
-  const firstUnderscore = unitId.indexOf('_');
-  if (firstUnderscore === -1) return unitId;
-  return unitId.substring(firstUnderscore + 1);
-}
-
 export default function UnitStatsPage() {
-  const { ready, unitCostMap, latestSetKey } = useTftAssets();
+  const { ready, unitCostMap, latestSetKey, getChampionName } = useTftMetadata();
   const [rows, setRows] = useState<UnitStatsApiRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -107,7 +101,7 @@ export default function UnitStatsPage() {
         <div className="space-y-5">
           {COST_TIERS.map((tier) => {
             const tierRows = grouped.get(tier) ?? [];
-            return <UnitStatsTierSection key={tier} tier={tier} tierRows={tierRows} formatUnitName={formatUnitName} />;
+            return <UnitStatsTierSection key={tier} tier={tier} tierRows={tierRows} formatUnitName={getChampionName} />;
           })}
         </div>
       )}

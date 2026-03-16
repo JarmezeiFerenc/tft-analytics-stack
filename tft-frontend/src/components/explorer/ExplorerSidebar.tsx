@@ -4,6 +4,7 @@ import { TftUnitImage } from '../shared/TftUnitImage';
 import { ItemPicker } from './ItemPicker';
 import { SearchableDropdown } from './SearchableDropdown';
 import type { UnitFilter } from './types';
+import { useTftMetadata } from '../../context/TftAssetContext';
 
 interface ExplorerSidebarProps {
   allTraitKeys: string[];
@@ -42,6 +43,8 @@ export function ExplorerSidebar({
   setMinGames,
   sidebarOpen,
 }: ExplorerSidebarProps) {
+  const { getChampionName, getTraitName } = useTftMetadata();
+
   return (
     <aside
       className={`w-full shrink-0 space-y-4 lg:block lg:w-72 xl:w-80 ${sidebarOpen ? '' : 'hidden lg:block'}`}
@@ -57,7 +60,7 @@ export function ExplorerSidebar({
             renderOption={(key) => (
               <>
                 <TftTraitIcon apiName={key} className="!h-6 !w-6" />
-                <span className="truncate">{key.replace(/^tft\d+_/i, '')}</span>
+                <span className="truncate">{getTraitName(key)}</span>
               </>
             )}
           />
@@ -71,7 +74,7 @@ export function ExplorerSidebar({
                   className="group flex items-center gap-1 rounded-lg border border-zinc-700 bg-zinc-800 px-2 py-1 text-xs text-zinc-200 hover:border-red-500/50 hover:bg-red-500/10"
                 >
                   <TftTraitIcon apiName={t} className="!h-5 !w-5" />
-                  <span className="truncate max-w-[80px]">{t.replace(/^tft\d+_/i, '')}</span>
+                  <span className="truncate max-w-[80px]">{getTraitName(t)}</span>
                   <X size={10} className="ml-0.5 shrink-0 text-zinc-500 group-hover:text-red-400" />
                 </button>
               ))}
@@ -89,7 +92,7 @@ export function ExplorerSidebar({
             renderOption={(key) => (
               <>
                 <TftUnitImage apiName={key} className="h-6 w-6 rounded object-cover" />
-                <span className="truncate">{key.replace(/^tft\d+_/i, '')}</span>
+                <span className="truncate">{getChampionName(key)}</span>
               </>
             )}
           />
@@ -104,7 +107,7 @@ export function ExplorerSidebar({
                       className="h-9 w-9 rounded-lg border border-[#d4af37] object-cover"
                     />
                     <span className="flex-1 truncate text-sm font-medium text-zinc-100">
-                      {uf.id.replace(/^tft\d+_/i, '')}
+                      {getChampionName(uf.id)}
                     </span>
                     <button
                       type="button"

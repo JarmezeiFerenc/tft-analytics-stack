@@ -64,8 +64,14 @@ services:
         condition: service_started
     environment:
       VITE_API_BASE_URL: ${VITE_API_BASE_URL}
+      CHOKIDAR_USEPOLLING: "true"
+      WATCHPACK_POLLING: "true"
     ports:
       - "3000:3000"
+    volumes:
+      - ./tft-frontend/src:/app/src
+      - ./tft-frontend/public:/app/public
+      - ./tft-frontend/index.html:/app/index.html
     networks:
       - tft-network
 

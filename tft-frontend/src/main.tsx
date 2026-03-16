@@ -2,12 +2,12 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.tsx'
-import { TftAssetProvider } from './context/TftAssetContext'
+import { TftMetadataProvider } from './context/TftAssetContext'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <TftAssetProvider>
+    <TftMetadataProvider>
       <App />
-    </TftAssetProvider>
+    </TftMetadataProvider>
   </StrictMode>,
 )

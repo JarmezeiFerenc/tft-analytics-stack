@@ -1,5 +1,6 @@
 import type { ReactElement } from 'react';
 import { Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis, type TooltipProps } from 'recharts';
+import { useTftMetadata } from '../../context/TftAssetContext';
 
 interface TraitLike {
   name: string;
@@ -33,7 +34,7 @@ interface CustomTooltipProps extends TooltipProps<number, string> {
   payload?: Array<{ payload?: PlacementPoint }>;
 }
 
-function getMainTrait(traits: TraitLike[]): string {
+function getMainTrait(traits: TraitLike[], getTraitName: (apiName: string) => string): string {
   if (!Array.isArray(traits) || traits.length === 0) {
     return 'Unknown';
   }
@@ -45,7 +46,7 @@ function getMainTrait(traits: TraitLike[]): string {
       return b.numUnits - a.numUnits;
     })[0];
 
-  return best ? best.name.replace(/^TFT\d+_/, '') : 'Unknown';
+  return best ? getTraitName(best.name) : 'Unknown';
 }
 
 function dotColor(placement: number): string {
@@ -90,12 +91,14 @@ function CustomTooltip({ active, payload }: CustomTooltipProps): ReactElement | 
 }
 
 export function PlacementChart({ matches }: PlacementChartProps) {
+  const { getTraitName } = useTftMetadata();
+
   const chartData: PlacementPoint[] = [...matches]
     .reverse()
     .map((match, index) => ({
       matchIndex: index + 1,
       placement: Math.min(8, Math.max(1, Number(match.myPlacement ?? 8))),
-      mainTrait: getMainTrait(match.myTraits),
+      mainTrait: getMainTrait(match.myTraits, getTraitName),
     }));
 
   if (chartData.length === 0) {

@@ -14,18 +14,14 @@ import { TeamPlannerBoard } from '../components/team-planner/TeamPlannerBoard';
 import { TeamPlannerPool } from '../components/team-planner/TeamPlannerPool';
 import { TftUnitImage } from '../components/shared/TftUnitImage';
 import { BOARD_SLOT_COUNT, type BoardSlot, type DragUnitPayload, type PlannerUnit } from '../components/team-planner/types';
-import { useTftAssets } from '../context/TftAssetContext';
+import { useTftMetadata } from '../context/TftAssetContext';
 
 function createEmptyBoard(): BoardSlot[] {
   return Array.from({ length: BOARD_SLOT_COUNT }, () => null);
 }
 
-function formatUnitName(unitId: string): string {
-  return unitId.replace(/^tft\d+_/i, '').replaceAll('_', ' ');
-}
-
 export default function TeamPlannerPage() {
-  const { ready, unitMap, unitCostMap } = useTftAssets();
+  const { ready, unitMap, unitCostMap, getChampionName } = useTftMetadata();
   const [boardSlots, setBoardSlots] = useState<BoardSlot[]>(() => createEmptyBoard());
   const [activeDrag, setActiveDrag] = useState<DragUnitPayload | null>(null);
 
@@ -84,12 +80,12 @@ export default function TeamPlannerPage() {
       .sort((a, b) =>
         a.tier !== b.tier
           ? a.tier - b.tier
-          : formatUnitName(a.id).localeCompare(formatUnitName(b.id)),
+          : getChampionName(a.id).localeCompare(getChampionName(b.id)),
       );
 
     for (const unit of units) grouped.get(unit.tier)?.push(unit);
     return grouped;
-  }, [unitCostMap, unitMap]);
+  }, [getChampionName, unitCostMap, unitMap]);
 
   const occupiedSlots = useMemo(() => boardSlots.filter(Boolean).length, [boardSlots]);
 
