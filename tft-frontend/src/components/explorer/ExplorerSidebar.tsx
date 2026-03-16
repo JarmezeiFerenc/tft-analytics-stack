@@ -43,7 +43,7 @@ export function ExplorerSidebar({
   setMinGames,
   sidebarOpen,
 }: ExplorerSidebarProps) {
-  const { getChampionName, getTraitName } = useTftMetadata();
+  const { getChampionData, getTraitData } = useTftMetadata();
 
   return (
     <aside
@@ -60,7 +60,7 @@ export function ExplorerSidebar({
             renderOption={(key) => (
               <>
                 <TftTraitIcon apiName={key} className="!h-6 !w-6" />
-                <span className="truncate">{getTraitName(key)}</span>
+                <span className="truncate">{getTraitData(key).name}</span>
               </>
             )}
           />
@@ -74,7 +74,7 @@ export function ExplorerSidebar({
                   className="group flex items-center gap-1 rounded-lg border border-zinc-700 bg-zinc-800 px-2 py-1 text-xs text-zinc-200 hover:border-red-500/50 hover:bg-red-500/10"
                 >
                   <TftTraitIcon apiName={t} className="!h-5 !w-5" />
-                  <span className="truncate max-w-[80px]">{getTraitName(t)}</span>
+                  <span className="truncate max-w-[80px]">{getTraitData(t).name}</span>
                   <X size={10} className="ml-0.5 shrink-0 text-zinc-500 group-hover:text-red-400" />
                 </button>
               ))}
@@ -92,7 +92,7 @@ export function ExplorerSidebar({
             renderOption={(key) => (
               <>
                 <TftUnitImage apiName={key} className="h-6 w-6 rounded object-cover" />
-                <span className="truncate">{getChampionName(key)}</span>
+                <span className="truncate">{getChampionData(key).name}</span>
               </>
             )}
           />
@@ -107,7 +107,7 @@ export function ExplorerSidebar({
                       className="h-9 w-9 rounded-lg border border-[#d4af37] object-cover"
                     />
                     <span className="flex-1 truncate text-sm font-medium text-zinc-100">
-                      {getChampionName(uf.id)}
+                      {getChampionData(uf.id).name}
                     </span>
                     <button
                       type="button"

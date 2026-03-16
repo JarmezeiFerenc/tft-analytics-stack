@@ -18,7 +18,7 @@ const tierLabel: Record<number, string> = {
 };
 
 export function TeamPlannerPool({ unitsByTier }: TeamPlannerPoolProps) {
-  const { getChampionName } = useTftMetadata();
+  const { getChampionData } = useTftMetadata();
 
   const { isOver, setNodeRef } = useDroppable({
     id: 'unit-pool',
@@ -54,7 +54,7 @@ export function TeamPlannerPool({ unitsByTier }: TeamPlannerPoolProps) {
                     dragId={`pool-unit:${unit.id}`}
                     unit={unit}
                     data={{ source: 'pool', unit }}
-                    label={`Add ${getChampionName(unit.id)} to board`}
+                    label={`Add ${getChampionData(unit.id).name} to board`}
                   />
                 ))}
               </div>

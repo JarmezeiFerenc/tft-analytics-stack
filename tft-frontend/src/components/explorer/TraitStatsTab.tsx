@@ -10,7 +10,7 @@ interface TraitStatsTabProps {
 }
 
 export function TraitStatsTab({ rows }: TraitStatsTabProps) {
-  const { getTraitName } = useTftMetadata();
+  const { getTraitData } = useTftMetadata();
 
   const { sorted, sortConfig, requestSort } = useSortableData(rows, {
     key: 'games_played',
@@ -65,7 +65,7 @@ export function TraitStatsTab({ rows }: TraitStatsTabProps) {
               <td className="px-4 py-2.5">
                 <div className="flex items-center gap-2">
                   <TftTraitIcon apiName={r.trait_name} style={r.max_style} />
-                  <span className="text-zinc-200">{getTraitName(r.trait_name)}</span>
+                  <span className="text-zinc-200">{getTraitData(r.trait_name).name}</span>
                 </div>
               </td>
               <td className="px-4 py-2.5 text-zinc-300">{r.avg_units}</td>

@@ -12,7 +12,7 @@ interface TftItemIconProps {
 export function TftItemIcon({ itemId, apiName, className, showTooltip = true }: TftItemIconProps) {
   const resolvedId = itemId ?? apiName ?? '';
   const { itemMap, getItemData } = useTftMetadata();
-  const src = itemMap.get(resolvedId.toLowerCase()) ?? PLACEHOLDER_URL;
+  const src = itemMap.get(resolvedId.toLowerCase())?.icon ?? PLACEHOLDER_URL;
   const item = getItemData(resolvedId);
 
   const image = (

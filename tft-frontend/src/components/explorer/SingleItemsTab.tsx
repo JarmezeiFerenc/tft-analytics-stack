@@ -11,7 +11,7 @@ interface SingleItemsTabProps {
 }
 
 export function SingleItemsTab({ rows }: SingleItemsTabProps) {
-  const { getItemName } = useTftMetadata();
+  const { getItemData } = useTftMetadata();
 
   const { sorted, sortConfig, requestSort } = useSortableData(rows, {
     key: 'games_played',
@@ -67,7 +67,7 @@ export function SingleItemsTab({ rows }: SingleItemsTabProps) {
                     apiName={r.item_name}
                     className="h-8 w-8 rounded-md border border-zinc-600 object-cover"
                   />
-                  <span className="text-zinc-200">{getItemName(r.item_name)}</span>
+                  <span className="text-zinc-200">{getItemData(r.item_name).name}</span>
                 </div>
               </td>
               <td className="px-4 py-2.5 text-zinc-300">{r.games_played}</td>

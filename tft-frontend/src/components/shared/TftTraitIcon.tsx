@@ -20,7 +20,7 @@ function tierBackground(style: number): string {
 
 export function TftTraitIcon({ apiName, className, style = 0, numUnits, showTooltip = true }: TftTraitIconProps) {
   const { traitMap, getTraitData } = useTftMetadata();
-  const src = traitMap.get(apiName.toLowerCase()) ?? PLACEHOLDER_URL;
+  const src = traitMap.get(apiName.toLowerCase())?.icon ?? PLACEHOLDER_URL;
   const background = tierBackground(style);
   const trait = getTraitData(apiName);
 

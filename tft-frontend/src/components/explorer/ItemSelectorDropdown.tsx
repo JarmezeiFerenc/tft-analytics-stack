@@ -16,7 +16,7 @@ function isBlockedExplorerItem(key: string): boolean {
 }
 
 export function ItemSelectorDropdown({ allItems, selected, onSelect }: ItemSelectorDropdownProps) {
-  const { getItemName } = useTftMetadata();
+  const { getItemData } = useTftMetadata();
 
   const explorerItems = useMemo(
     () => allItems.filter((key) => key.startsWith('tft_item_') && !isBlockedExplorerItem(key)),
@@ -32,7 +32,7 @@ export function ItemSelectorDropdown({ allItems, selected, onSelect }: ItemSelec
       renderOption={(key) => (
         <>
           <TftItemImage apiName={key} className="h-5 w-5 rounded object-cover" />
-          <span className="truncate">{getItemName(key)}</span>
+          <span className="truncate">{getItemData(key).name}</span>
         </>
       )}
     />

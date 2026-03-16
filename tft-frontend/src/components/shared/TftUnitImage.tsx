@@ -20,7 +20,7 @@ const COST_BADGE: Record<number, string> = {
 export function TftUnitImage({ unitId, apiName, className, showTooltip = true }: TftUnitImageProps) {
   const resolvedId = unitId ?? apiName ?? '';
   const { unitMap, getChampionData } = useTftMetadata();
-  const src = unitMap.get(resolvedId.toLowerCase()) ?? PLACEHOLDER_URL;
+  const src = unitMap.get(resolvedId.toLowerCase())?.icon ?? PLACEHOLDER_URL;
   const champion = getChampionData(resolvedId);
 
   const image = (

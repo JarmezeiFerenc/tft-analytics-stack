@@ -21,7 +21,7 @@ function createEmptyBoard(): BoardSlot[] {
 }
 
 export default function TeamPlannerPage() {
-  const { ready, unitMap, unitCostMap, getChampionName } = useTftMetadata();
+  const { ready, unitMap } = useTftMetadata();
   const [boardSlots, setBoardSlots] = useState<BoardSlot[]>(() => createEmptyBoard());
   const [activeDrag, setActiveDrag] = useState<DragUnitPayload | null>(null);
 
@@ -67,25 +67,29 @@ export default function TeamPlannerPage() {
     const grouped = new Map<number, PlannerUnit[]>();
     for (let tier = 1; tier <= 5; tier += 1) grouped.set(tier, []);
 
-    const units = Array.from(unitMap.keys())
-      .map((id) => {
-        const unitId = id.toLowerCase();
-        return {
-          id,
-          tier: unitCostMap.get(unitId) ?? -1,
-          starLevel: 1,
-        };
-      })
+    const units = Array.from(unitMap.values())
+      .map((unit) => ({
+        id: unit.apiName,
+        tier: unit.cost ?? -1,
+        name: unit.name,
+        starLevel: 1,
+      }))
       .filter((u) => u.tier >= 1 && u.tier <= 5)
       .sort((a, b) =>
         a.tier !== b.tier
           ? a.tier - b.tier
-          : getChampionName(a.id).localeCompare(getChampionName(b.id)),
+          : a.name.localeCompare(b.name),
       );
 
-    for (const unit of units) grouped.get(unit.tier)?.push(unit);
+    for (const unit of units) {
+      grouped.get(unit.tier)?.push({
+        id: unit.id,
+        tier: unit.tier,
+        starLevel: unit.starLevel,
+      });
+    }
     return grouped;
-  }, [getChampionName, unitCostMap, unitMap]);
+  }, [unitMap]);
 
   const occupiedSlots = useMemo(() => boardSlots.filter(Boolean).length, [boardSlots]);
 

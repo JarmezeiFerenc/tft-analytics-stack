@@ -26,7 +26,7 @@ export function PlannerUnitToken({
   label,
   dragDisabled = false,
 }: PlannerUnitTokenProps) {
-  const { getChampionName } = useTftMetadata();
+  const { getChampionData } = useTftMetadata();
 
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: dragId,
@@ -60,7 +60,7 @@ export function PlannerUnitToken({
         <TftUnitImage apiName={unit.id} className="h-full w-full object-cover" showTooltip={false} />
       </div>
       <span className="min-w-0 truncate text-xs font-medium text-zinc-200">
-        {getChampionName(unit.id)}
+        {getChampionData(unit.id).name}
       </span>
     </button>
   );

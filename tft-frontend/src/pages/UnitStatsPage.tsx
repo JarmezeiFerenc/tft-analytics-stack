@@ -9,7 +9,7 @@ const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000/api
 const COST_TIERS = [5, 4, 3, 2, 1] as const;
 
 export default function UnitStatsPage() {
-  const { ready, unitCostMap, latestSetKey, getChampionName } = useTftMetadata();
+  const { ready, latestSetKey, getChampionData } = useTftMetadata();
   const [rows, setRows] = useState<UnitStatsApiRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -50,10 +50,10 @@ export default function UnitStatsPage() {
   const grouped = useMemo(() => {
     const merged: UnitStatsRow[] = rows
       .map((row) => {
-        const unitId = row.unit_id.toLowerCase();
+        const champion = getChampionData(row.unit_id);
         return {
           ...row,
-          cost: unitCostMap.get(unitId) ?? -1,
+          cost: champion.cost ?? -1,
         };
       })
       .filter((row) => row.cost >= 1 && row.cost <= 5);
@@ -80,7 +80,7 @@ export default function UnitStatsPage() {
     }
 
     return byTier;
-  }, [rows, unitCostMap]);
+  }, [getChampionData, rows]);
 
   return (
     <section className="space-y-6">
@@ -101,7 +101,14 @@ export default function UnitStatsPage() {
         <div className="space-y-5">
           {COST_TIERS.map((tier) => {
             const tierRows = grouped.get(tier) ?? [];
-            return <UnitStatsTierSection key={tier} tier={tier} tierRows={tierRows} formatUnitName={getChampionName} />;
+            return (
+              <UnitStatsTierSection
+                key={tier}
+                tier={tier}
+                tierRows={tierRows}
+                formatUnitName={(unitId) => getChampionData(unitId).name}
+              />
+            );
           })}
         </div>
       )}
