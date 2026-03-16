@@ -1,21 +1,24 @@
-import { useTftAssets } from '../../context/TftAssetContext';
+import { useTftMetadata } from '../../context/TftAssetContext';
 import { PLACEHOLDER_URL } from '../../utils/cdragon';
+import { TftHoverTooltip } from './TftHoverTooltip';
 
 interface TftItemIconProps {
   itemId?: string;
   apiName?: string;
   className?: string;
+  showTooltip?: boolean;
 }
 
-export function TftItemIcon({ itemId, apiName, className }: TftItemIconProps) {
+export function TftItemIcon({ itemId, apiName, className, showTooltip = true }: TftItemIconProps) {
   const resolvedId = itemId ?? apiName ?? '';
-  const { itemMap } = useTftAssets();
+  const { itemMap, getItemData } = useTftMetadata();
   const src = itemMap.get(resolvedId.toLowerCase()) ?? PLACEHOLDER_URL;
+  const item = getItemData(resolvedId);
 
-  return (
+  const image = (
     <img
       src={src}
-      alt={resolvedId}
+      alt={item.name}
       className={className}
       loading="lazy"
       onError={(e) => {
@@ -25,5 +28,15 @@ export function TftItemIcon({ itemId, apiName, className }: TftItemIconProps) {
         }
       }}
     />
+  );
+
+  return (
+    <TftHoverTooltip
+      showTooltip={showTooltip}
+      title={item.name}
+      description={item.desc}
+    >
+      {image}
+    </TftHoverTooltip>
   );
 }

@@ -185,7 +185,7 @@ export default function TeamPlannerPage() {
         <DragOverlay dropAnimation={null}>
           {activeDrag ? (
             <div className="hex-clip hex-slot pointer-events-none opacity-90">
-              <TftUnitImage apiName={activeDrag.unit.id} className="h-full w-full object-cover" />
+              <TftUnitImage apiName={activeDrag.unit.id} className="h-full w-full object-cover" showTooltip={false} />
             </div>
           ) : null}
         </DragOverlay>

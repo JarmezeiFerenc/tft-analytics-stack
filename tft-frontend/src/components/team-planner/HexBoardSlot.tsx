@@ -21,7 +21,7 @@ function BoardUnitDraggable({ slotIndex, unit, hidden }: { slotIndex: number; un
       {...attributes}
       className={`absolute inset-0 cursor-grab active:cursor-grabbing ${hidden ? 'opacity-0' : ''}`}
     >
-      <TftUnitImage apiName={unit.id} className="h-full w-full object-cover" />
+      <TftUnitImage apiName={unit.id} className="h-full w-full object-cover" showTooltip={false} />
     </div>
   );
 }

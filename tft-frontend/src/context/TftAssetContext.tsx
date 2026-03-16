@@ -1,5 +1,25 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
-import { cdragonAssetPathToPngUrl } from '../utils/cdragon';
+import { cdragonAssetPathToPngUrl, cleanTftDescription, type TftTextReplacementValue, type TftTextReplacements } from '../utils/cdragon';
+
+export interface TftChampionMetadata {
+    apiName: string;
+    name: string;
+    cost: number | null;
+    abilityName: string;
+    abilityDesc: string;
+}
+
+export interface TftItemMetadata {
+    apiName: string;
+    name: string;
+    desc: string;
+}
+
+export interface TftTraitMetadata {
+    apiName: string;
+    name: string;
+    desc: string;
+}
 
 interface TftAssets {
     itemMap: Map<string, string>;
@@ -9,9 +29,15 @@ interface TftAssets {
     championNameMap: Map<string, string>;
     itemNameMap: Map<string, string>;
     traitNameMap: Map<string, string>;
+    championDataMap: Map<string, TftChampionMetadata>;
+    itemDataMap: Map<string, TftItemMetadata>;
+    traitDataMap: Map<string, TftTraitMetadata>;
     getChampionName: (apiName: string) => string;
     getItemName: (apiName: string) => string;
     getTraitName: (apiName: string) => string;
+    getChampionData: (apiName: string) => TftChampionMetadata;
+    getItemData: (apiName: string) => TftItemMetadata;
+    getTraitData: (apiName: string) => TftTraitMetadata;
     latestSetKey: string | null;
     ready: boolean;
 }
@@ -24,9 +50,29 @@ const TftAssetContext = createContext<TftAssets>({
     championNameMap: new Map(),
     itemNameMap: new Map(),
     traitNameMap: new Map(),
+    championDataMap: new Map(),
+    itemDataMap: new Map(),
+    traitDataMap: new Map(),
     getChampionName: (apiName: string) => formatApiNameFallback(apiName),
     getItemName: (apiName: string) => formatApiNameFallback(apiName),
     getTraitName: (apiName: string) => formatApiNameFallback(apiName),
+    getChampionData: (apiName: string) => ({
+        apiName,
+        name: formatApiNameFallback(apiName),
+        cost: null,
+        abilityName: '',
+        abilityDesc: '',
+    }),
+    getItemData: (apiName: string) => ({
+        apiName,
+        name: formatApiNameFallback(apiName),
+        desc: '',
+    }),
+    getTraitData: (apiName: string) => ({
+        apiName,
+        name: formatApiNameFallback(apiName),
+        desc: '',
+    }),
     latestSetKey: null,
     ready: false,
 });
@@ -46,6 +92,19 @@ interface RawItem {
     id?: string;
     icon?: string;
     name?: string;
+    desc?: string;
+    effects?: Record<string, TftTextReplacementValue> | null;
+}
+
+interface RawChampionAbilityVariable {
+    name?: string;
+    value?: TftTextReplacementValue;
+}
+
+interface RawChampionAbility {
+    name?: string;
+    desc?: string;
+    variables?: RawChampionAbilityVariable[];
 }
 
 interface RawChampion {
@@ -54,12 +113,19 @@ interface RawChampion {
     icon?: string;
     cost?: number;
     name?: string;
+    ability?: RawChampionAbility;
+}
+
+interface RawTraitEffect {
+    variables?: Record<string, TftTextReplacementValue>;
 }
 
 interface RawTrait {
     apiName?: string;
     icon?: string;
     name?: string;
+    desc?: string;
+    effects?: RawTraitEffect[];
 }
 
 interface RawSet {
@@ -105,6 +171,58 @@ function getLatestSetKey(sets: Record<string, RawSet> | undefined): string | nul
     return latest?.key ?? null;
 }
 
+function getFallbackChampionData(apiName: string): TftChampionMetadata {
+    return {
+        apiName,
+        name: formatApiNameFallback(apiName),
+        cost: null,
+        abilityName: '',
+        abilityDesc: '',
+    };
+}
+
+function getFallbackItemData(apiName: string): TftItemMetadata {
+    return {
+        apiName,
+        name: formatApiNameFallback(apiName),
+        desc: '',
+    };
+}
+
+function getFallbackTraitData(apiName: string): TftTraitMetadata {
+    return {
+        apiName,
+        name: formatApiNameFallback(apiName),
+        desc: '',
+    };
+}
+
+function toReplacementRecord(source: Record<string, TftTextReplacementValue> | null | undefined): TftTextReplacements {
+    if (!source) return {};
+
+    return Object.fromEntries(
+        Object.entries(source).filter(([, value]) => value !== undefined && value !== null),
+    );
+}
+
+function getChampionAbilityReplacements(ability: RawChampionAbility | undefined): TftTextReplacements {
+    const replacements: TftTextReplacements = {};
+
+    for (const variable of ability?.variables ?? []) {
+        if (!variable.name || variable.value === undefined || variable.value === null) continue;
+        replacements[variable.name] = variable.value;
+    }
+
+    return replacements;
+}
+
+function getTraitReplacements(trait: RawTrait): TftTextReplacements {
+    const effects = Array.isArray(trait.effects) ? trait.effects : [];
+    if (effects.length !== 1) return {};
+
+    return toReplacementRecord(effects[0]?.variables);
+}
+
 export function TftMetadataProvider({ children }: { children: ReactNode }) {
     const [assets, setAssets] = useState<TftAssets>({
         itemMap: new Map(),
@@ -114,9 +232,15 @@ export function TftMetadataProvider({ children }: { children: ReactNode }) {
         championNameMap: new Map(),
         itemNameMap: new Map(),
         traitNameMap: new Map(),
+        championDataMap: new Map(),
+        itemDataMap: new Map(),
+        traitDataMap: new Map(),
         getChampionName: (apiName: string) => formatApiNameFallback(apiName),
         getItemName: (apiName: string) => formatApiNameFallback(apiName),
         getTraitName: (apiName: string) => formatApiNameFallback(apiName),
+        getChampionData: getFallbackChampionData,
+        getItemData: getFallbackItemData,
+        getTraitData: getFallbackTraitData,
         latestSetKey: null,
         ready: false,
     });
@@ -139,6 +263,9 @@ export function TftMetadataProvider({ children }: { children: ReactNode }) {
                 const championNameMap = new Map<string, string>();
                 const itemNameMap = new Map<string, string>();
                 const traitNameMap = new Map<string, string>();
+                const championDataMap = new Map<string, TftChampionMetadata>();
+                const itemDataMap = new Map<string, TftItemMetadata>();
+                const traitDataMap = new Map<string, TftTraitMetadata>();
                 const latestSetKey = getLatestSetKey(data.sets);
 
                 if (Array.isArray(data.items)) {
@@ -150,6 +277,13 @@ export function TftMetadataProvider({ children }: { children: ReactNode }) {
                         }
                         if (key && item.name) {
                             itemNameMap.set(key, item.name);
+                        }
+                        if (key) {
+                            itemDataMap.set(key, {
+                                apiName: item.apiName ?? item.id ?? key,
+                                name: item.name ?? formatApiNameFallback(item.apiName ?? item.id ?? key),
+                                desc: cleanTftDescription(item.desc, toReplacementRecord(item.effects)),
+                            });
                         }
                     }
                 }
@@ -171,6 +305,18 @@ export function TftMetadataProvider({ children }: { children: ReactNode }) {
                                 if (key && champ.name) {
                                     championNameMap.set(key, champ.name);
                                 }
+                                if (key) {
+                                    championDataMap.set(key, {
+                                        apiName: champ.apiName ?? key,
+                                        name: champ.name ?? formatApiNameFallback(champ.apiName ?? key),
+                                        cost: typeof champ.cost === 'number' ? champ.cost : null,
+                                        abilityName: champ.ability?.name?.trim() ?? '',
+                                        abilityDesc: cleanTftDescription(
+                                            champ.ability?.desc,
+                                            getChampionAbilityReplacements(champ.ability),
+                                        ),
+                                    });
+                                }
                             }
                         }
                         if (Array.isArray(latestSet.traits)) {
@@ -181,6 +327,13 @@ export function TftMetadataProvider({ children }: { children: ReactNode }) {
                                 }
                                 if (key && trait.name) {
                                     traitNameMap.set(key, trait.name);
+                                }
+                                if (key) {
+                                    traitDataMap.set(key, {
+                                        apiName: trait.apiName ?? key,
+                                        name: trait.name ?? formatApiNameFallback(trait.apiName ?? key),
+                                        desc: cleanTftDescription(trait.desc, getTraitReplacements(trait)),
+                                    });
                                 }
                             }
                         }
@@ -202,6 +355,21 @@ export function TftMetadataProvider({ children }: { children: ReactNode }) {
                     return traitNameMap.get(normalized) ?? formatApiNameFallback(apiName);
                 };
 
+                const getChampionData = (apiName: string): TftChampionMetadata => {
+                    const normalized = normalizeApiName(apiName);
+                    return championDataMap.get(normalized) ?? getFallbackChampionData(apiName);
+                };
+
+                const getItemData = (apiName: string): TftItemMetadata => {
+                    const normalized = normalizeApiName(apiName);
+                    return itemDataMap.get(normalized) ?? getFallbackItemData(apiName);
+                };
+
+                const getTraitData = (apiName: string): TftTraitMetadata => {
+                    const normalized = normalizeApiName(apiName);
+                    return traitDataMap.get(normalized) ?? getFallbackTraitData(apiName);
+                };
+
                 setAssets({
                     itemMap,
                     unitMap,
@@ -210,9 +378,15 @@ export function TftMetadataProvider({ children }: { children: ReactNode }) {
                     championNameMap,
                     itemNameMap,
                     traitNameMap,
+                    championDataMap,
+                    itemDataMap,
+                    traitDataMap,
                     getChampionName,
                     getItemName,
                     getTraitName,
+                    getChampionData,
+                    getItemData,
+                    getTraitData,
                     latestSetKey,
                     ready: true,
                 });

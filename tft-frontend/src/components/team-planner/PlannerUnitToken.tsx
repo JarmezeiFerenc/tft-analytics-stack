@@ -57,7 +57,7 @@ export function PlannerUnitToken({
       }`}
     >
       <div className="relative h-9 w-9 shrink-0 overflow-hidden rounded-lg border border-white/10 bg-zinc-950">
-        <TftUnitImage apiName={unit.id} className="h-full w-full object-cover" />
+        <TftUnitImage apiName={unit.id} className="h-full w-full object-cover" showTooltip={false} />
       </div>
       <span className="min-w-0 truncate text-xs font-medium text-zinc-200">
         {getChampionName(unit.id)}

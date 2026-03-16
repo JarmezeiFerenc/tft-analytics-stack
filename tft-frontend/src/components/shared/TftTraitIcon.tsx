@@ -1,11 +1,13 @@
-import { useTftAssets } from '../../context/TftAssetContext';
+import { useTftMetadata } from '../../context/TftAssetContext';
 import { PLACEHOLDER_URL } from '../../utils/cdragon';
+import { TftHoverTooltip } from './TftHoverTooltip';
 
 interface TftTraitIconProps {
   apiName: string;
   className?: string;
   style?: number;
   numUnits?: number;
+  showTooltip?: boolean;
 }
 
 function tierBackground(style: number): string {
@@ -16,16 +18,17 @@ function tierBackground(style: number): string {
   return 'bg-zinc-800';
 }
 
-export function TftTraitIcon({ apiName, className, style = 0, numUnits }: TftTraitIconProps) {
-  const { traitMap } = useTftAssets();
+export function TftTraitIcon({ apiName, className, style = 0, numUnits, showTooltip = true }: TftTraitIconProps) {
+  const { traitMap, getTraitData } = useTftMetadata();
   const src = traitMap.get(apiName.toLowerCase()) ?? PLACEHOLDER_URL;
   const background = tierBackground(style);
+  const trait = getTraitData(apiName);
 
-  return (
+  const content = (
     <div className={`relative inline-flex h-8 w-8 items-center justify-center rounded-[10px] shadow-inner ${background} ${className ?? ''}`}>
       <img
         src={src}
-        alt={apiName}
+        alt={trait.name}
         className="h-5 w-5 object-contain"
         loading="lazy"
         onError={(e) => {
@@ -41,5 +44,15 @@ export function TftTraitIcon({ apiName, className, style = 0, numUnits }: TftTra
         </span>
       )}
     </div>
+  );
+
+  return (
+    <TftHoverTooltip
+      showTooltip={showTooltip}
+      title={trait.name}
+      description={trait.desc}
+    >
+      {content}
+    </TftHoverTooltip>
   );
 }
