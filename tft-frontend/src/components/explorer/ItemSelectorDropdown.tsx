@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { useTftMetadata } from '../../context/TftAssetContext';
+import { useTftAssets } from '../../context/TftAssetContext';
 import { TftItemIcon as TftItemImage } from '../shared/TftItemIcon';
 import { SearchableDropdown } from './SearchableDropdown';
 
@@ -16,7 +16,7 @@ function isBlockedExplorerItem(key: string): boolean {
 }
 
 export function ItemSelectorDropdown({ allItems, selected, onSelect }: ItemSelectorDropdownProps) {
-  const { getItemData } = useTftMetadata();
+  const { getItemData } = useTftAssets();
 
   const explorerItems = useMemo(
     () => allItems.filter((key) => key.startsWith('tft_item_') && !isBlockedExplorerItem(key)),

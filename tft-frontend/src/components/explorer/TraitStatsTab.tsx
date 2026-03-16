@@ -1,5 +1,5 @@
 import { TftTraitIcon } from '../shared/TftTraitIcon';
-import { useTftMetadata } from '../../context/TftAssetContext';
+import { useTftAssets } from '../../context/TftAssetContext';
 import { EmptyTab } from './EmptyTab';
 import { SortHeader } from './SortHeader';
 import type { TraitStatRow } from './types';
@@ -10,7 +10,7 @@ interface TraitStatsTabProps {
 }
 
 export function TraitStatsTab({ rows }: TraitStatsTabProps) {
-  const { getTraitData } = useTftMetadata();
+  const { getTraitData } = useTftAssets();
 
   const { sorted, sortConfig, requestSort } = useSortableData(rows, {
     key: 'games_played',

@@ -4,7 +4,7 @@ import { TftUnitImage } from '../shared/TftUnitImage';
 import { ItemPicker } from './ItemPicker';
 import { SearchableDropdown } from './SearchableDropdown';
 import type { UnitFilter } from './types';
-import { useTftMetadata } from '../../context/TftAssetContext';
+import { useTftAssets } from '../../context/TftAssetContext';
 
 interface ExplorerSidebarProps {
   allTraitKeys: string[];
@@ -43,7 +43,7 @@ export function ExplorerSidebar({
   setMinGames,
   sidebarOpen,
 }: ExplorerSidebarProps) {
-  const { getChampionData, getTraitData } = useTftMetadata();
+  const { getChampionData, getTraitData } = useTftAssets();
 
   return (
     <aside

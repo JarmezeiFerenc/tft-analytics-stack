@@ -1,8 +1,8 @@
-import { Loader2 } from 'lucide-react';
 import { useState } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { MatchHistorySection } from '../components/player-profile/MatchHistorySection';
 import { PlayerProfileCard } from '../components/player-profile/PlayerProfileCard';
+import { PlayerProfileSkeleton } from '../components/player-profile/PlayerProfileSkeleton';
 import { PlayerProfileSearchHeader } from '../components/player-profile/PlayerProfileSearchHeader';
 import type { ApiResponse, RegionOption } from '../components/player-profile/types';
 
@@ -15,7 +15,6 @@ const REGION_OPTIONS: RegionOption[] = [
   { label: 'BR', value: 'br1' },
   { label: 'KR', value: 'kr' },
 ];
-
 
 function regionLabel(value: string): string {
   const found = REGION_OPTIONS.find((o) => o.value === value);
@@ -83,12 +82,7 @@ export default function PlayerProfile() {
         handleSubmit={handleSubmit}
       />
 
-      {loading && (
-        <div className="flex items-center justify-center gap-3 rounded-2xl border border-zinc-800 bg-zinc-900/70 p-10 text-zinc-400">
-          <Loader2 size={20} className="animate-spin text-indigo-400" />
-          <span>Syncing live data from Riot...</span>
-        </div>
-      )}
+      {loading && <PlayerProfileSkeleton />}
 
       {error && (
         <div className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300">

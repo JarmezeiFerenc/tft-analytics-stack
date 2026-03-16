@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ChevronDown, Loader2 } from 'lucide-react';
+import { ChevronDown } from 'lucide-react';
 import { ExplorerHeader } from '../components/explorer/ExplorerHeader';
+import { ExplorerPageSkeleton } from '../components/explorer/ExplorerPageSkeleton';
 import { ExplorerSidebar } from '../components/explorer/ExplorerSidebar';
+import { ExplorerTableSkeleton } from '../components/explorer/ExplorerTableSkeleton';
 import { ExplorerSummaryStats } from '../components/explorer/ExplorerSummaryStats';
 import { ExplorerTabs } from '../components/explorer/ExplorerTabs';
 import { ItemCombinationsTab } from '../components/explorer/ItemCombinationsTab';
@@ -179,11 +181,7 @@ export default function Explorer() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   if (!ready) {
-    return (
-      <div className="flex items-center justify-center p-20 text-zinc-400">
-        <Loader2 size={24} className="mr-2 animate-spin" /> Loading asset data...
-      </div>
-    );
+    return <ExplorerPageSkeleton />;
   }
 
   return (
@@ -233,11 +231,7 @@ export default function Explorer() {
           </div>
         )}
 
-        {loading && (
-          <div className="flex items-center justify-center gap-2 rounded-xl border border-zinc-800 bg-zinc-900/50 py-10 text-zinc-400">
-            <Loader2 size={18} className="animate-spin" /> Querying…
-          </div>
-        )}
+        {loading && <ExplorerTableSkeleton />}
 
         {!loading && activeTab === 'items' && <ItemCombinationsTab rows={itemRows} />}
         {!loading && activeTab === 'traits' && <TraitStatsTab rows={traitRows} />}

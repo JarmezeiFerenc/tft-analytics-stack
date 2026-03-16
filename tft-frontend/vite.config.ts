@@ -14,5 +14,7 @@ export default defineConfig({
     hmr: {
       clientPort: 3000,
     },
+    // This is a security risk, but since this is only for local development and I want to be able to access the dev server from other devices on my network, I'm enabling it.
+    allowedHosts: true
   },
 })

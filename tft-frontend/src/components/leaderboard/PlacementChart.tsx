@@ -1,6 +1,6 @@
 import type { ReactElement } from 'react';
 import { Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis, type TooltipProps } from 'recharts';
-import { useTftMetadata } from '../../context/TftAssetContext';
+import { useTftAssets } from '../../context/TftAssetContext';
 import type { TftTraitData } from '../../context/TftAssetContext';
 
 interface TraitLike {
@@ -92,7 +92,7 @@ function CustomTooltip({ active, payload }: CustomTooltipProps): ReactElement | 
 }
 
 export function PlacementChart({ matches }: PlacementChartProps) {
-  const { getTraitData } = useTftMetadata();
+  const { getTraitData } = useTftAssets();
 
   const chartData: PlacementPoint[] = [...matches]
     .reverse()

@@ -8,21 +8,61 @@ import {
   type DragEndEvent,
   type DragStartEvent,
 } from '@dnd-kit/core';
-import { useMemo, useState } from 'react';
-import { Loader2, Trash2 } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { Trash2 } from 'lucide-react';
 import { TeamPlannerBoard } from '../components/team-planner/TeamPlannerBoard';
+import { TeamPlannerPageSkeleton } from '../components/team-planner/TeamPlannerPageSkeleton';
 import { TeamPlannerPool } from '../components/team-planner/TeamPlannerPool';
 import { TftUnitImage } from '../components/shared/TftUnitImage';
 import { BOARD_SLOT_COUNT, type BoardSlot, type DragUnitPayload, type PlannerUnit } from '../components/team-planner/types';
-import { useTftMetadata } from '../context/TftAssetContext';
+import { useTftAssets } from '../context/TftAssetContext';
 
 function createEmptyBoard(): BoardSlot[] {
   return Array.from({ length: BOARD_SLOT_COUNT }, () => null);
 }
 
+function serializeBoardToQuery(boardSlots: BoardSlot[]): string {
+  return boardSlots
+    .flatMap((slot, index) => (slot ? [`${index}:${slot.id}`] : []))
+    .join(',');
+}
+
+function parseBoardFromQuery(search: string): BoardSlot[] {
+  const boardSlots = createEmptyBoard();
+  const boardParam = new URLSearchParams(search).get('board');
+
+  if (!boardParam) {
+    return boardSlots;
+  }
+
+  for (const pair of boardParam.split(',')) {
+    const [rawIndex, rawApiName] = pair.split(':');
+    const index = Number(rawIndex);
+    const apiName = rawApiName?.trim();
+
+    if (!Number.isInteger(index) || index < 0 || index >= BOARD_SLOT_COUNT || !apiName) {
+      continue;
+    }
+
+    boardSlots[index] = {
+      id: apiName,
+      tier: -1,
+      starLevel: 1,
+    };
+  }
+
+  return boardSlots;
+}
+
 export default function TeamPlannerPage() {
-  const { ready, unitMap } = useTftMetadata();
-  const [boardSlots, setBoardSlots] = useState<BoardSlot[]>(() => createEmptyBoard());
+  const { ready, unitMap } = useTftAssets();
+  const [boardSlots, setBoardSlots] = useState<BoardSlot[]>(() => {
+    if (typeof window === 'undefined') {
+      return createEmptyBoard();
+    }
+
+    return parseBoardFromQuery(window.location.search);
+  });
   const [activeDrag, setActiveDrag] = useState<DragUnitPayload | null>(null);
 
   const sensors = useSensors(
@@ -93,6 +133,29 @@ export default function TeamPlannerPage() {
 
   const occupiedSlots = useMemo(() => boardSlots.filter(Boolean).length, [boardSlots]);
 
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    const params = new URLSearchParams(window.location.search);
+    const serializedBoard = serializeBoardToQuery(boardSlots);
+
+    if (serializedBoard) {
+      params.set('board', serializedBoard);
+    } else {
+      params.delete('board');
+    }
+
+    const nextSearch = params.toString();
+    const nextUrl = `${window.location.pathname}${nextSearch ? `?${nextSearch}` : ''}${window.location.hash}`;
+    const currentUrl = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+
+    if (nextUrl !== currentUrl) {
+      window.history.replaceState(window.history.state, '', nextUrl);
+    }
+  }, [boardSlots]);
+
   const handleDragStart = (event: DragStartEvent) => {
     setActiveDrag((event.active.data.current as DragUnitPayload | null) ?? null);
   };
@@ -141,12 +204,7 @@ export default function TeamPlannerPage() {
   };
 
   if (!ready) {
-    return (
-      <div className="flex items-center justify-center rounded-2xl border border-zinc-800 bg-zinc-900/70 px-4 py-20 text-zinc-400">
-        <Loader2 size={18} className="mr-2 animate-spin" />
-        Preparing planner assets…
-      </div>
-    );
+    return <TeamPlannerPageSkeleton />;
   }
 
   return (

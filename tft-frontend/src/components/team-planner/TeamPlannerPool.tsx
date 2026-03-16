@@ -1,5 +1,5 @@
 import { useDroppable } from '@dnd-kit/core';
-import { useTftMetadata } from '../../context/TftAssetContext';
+import { useTftAssets } from '../../context/TftAssetContext';
 import { PlannerUnitToken } from './PlannerUnitToken';
 import type { PlannerUnit } from './types';
 
@@ -18,7 +18,7 @@ const tierLabel: Record<number, string> = {
 };
 
 export function TeamPlannerPool({ unitsByTier }: TeamPlannerPoolProps) {
-  const { getChampionData } = useTftMetadata();
+  const { getChampionData } = useTftAssets();
 
   const { isOver, setNodeRef } = useDroppable({
     id: 'unit-pool',

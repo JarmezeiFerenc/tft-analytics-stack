@@ -1,4 +1,4 @@
-import { useTftMetadata } from '../../context/TftAssetContext';
+import { useTftAssets } from '../../context/TftAssetContext';
 import { PLACEHOLDER_URL } from '../../utils/cdragon';
 import { TftHoverTooltip } from './TftHoverTooltip';
 
@@ -19,7 +19,7 @@ const COST_BADGE: Record<number, string> = {
 
 export function TftUnitImage({ unitId, apiName, className, showTooltip = true }: TftUnitImageProps) {
   const resolvedId = unitId ?? apiName ?? '';
-  const { unitMap, getChampionData } = useTftMetadata();
+  const { unitMap, getChampionData } = useTftAssets();
   const src = unitMap.get(resolvedId.toLowerCase())?.icon ?? PLACEHOLDER_URL;
   const champion = getChampionData(resolvedId);
 

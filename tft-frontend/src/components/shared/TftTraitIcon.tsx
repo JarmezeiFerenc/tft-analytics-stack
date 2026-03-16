@@ -1,4 +1,4 @@
-import { useTftMetadata } from '../../context/TftAssetContext';
+import { useTftAssets } from '../../context/TftAssetContext';
 import { PLACEHOLDER_URL } from '../../utils/cdragon';
 import { TftHoverTooltip } from './TftHoverTooltip';
 
@@ -19,7 +19,7 @@ function tierBackground(style: number): string {
 }
 
 export function TftTraitIcon({ apiName, className, style = 0, numUnits, showTooltip = true }: TftTraitIconProps) {
-  const { traitMap, getTraitData } = useTftMetadata();
+  const { traitMap, getTraitData } = useTftAssets();
   const src = traitMap.get(apiName.toLowerCase())?.icon ?? PLACEHOLDER_URL;
   const background = tierBackground(style);
   const trait = getTraitData(apiName);

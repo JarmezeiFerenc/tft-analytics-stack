@@ -4,14 +4,14 @@ import { EmptyTab } from './EmptyTab';
 import { SortHeader } from './SortHeader';
 import type { SingleItemRow } from './types';
 import { useSortableData } from './useSortableData';
-import { useTftMetadata } from '../../context/TftAssetContext';
+import { useTftAssets } from '../../context/TftAssetContext';
 
 interface SingleItemsTabProps {
   rows: SingleItemRow[];
 }
 
 export function SingleItemsTab({ rows }: SingleItemsTabProps) {
-  const { getItemData } = useTftMetadata();
+  const { getItemData } = useTftAssets();
 
   const { sorted, sortConfig, requestSort } = useSortableData(rows, {
     key: 'games_played',

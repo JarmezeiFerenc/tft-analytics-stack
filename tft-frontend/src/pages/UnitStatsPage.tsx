@@ -1,15 +1,15 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Loader2 } from 'lucide-react';
 import { UnitStatsHeader } from '../components/unit-stats/UnitStatsHeader';
+import { UnitStatsPageSkeleton } from '../components/unit-stats/UnitStatsPageSkeleton';
 import { UnitStatsTierSection } from '../components/unit-stats/UnitStatsTierSection';
 import type { UnitStatsApiRow, UnitStatsRow } from '../components/unit-stats/types';
-import { useTftMetadata } from '../context/TftAssetContext';
+import { useTftAssets } from '../context/TftAssetContext';
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000/api';
 const COST_TIERS = [5, 4, 3, 2, 1] as const;
 
 export default function UnitStatsPage() {
-  const { ready, latestSetKey, getChampionData } = useTftMetadata();
+  const { ready, latestSetKey, getChampionData } = useTftAssets();
   const [rows, setRows] = useState<UnitStatsApiRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -93,10 +93,7 @@ export default function UnitStatsPage() {
       )}
 
       {loading || !ready ? (
-        <div className="flex items-center justify-center rounded-2xl border border-zinc-800 bg-zinc-900/70 px-4 py-20 text-zinc-400">
-          <Loader2 size={18} className="mr-2 animate-spin" />
-          Loading unit statistics...
-        </div>
+        <UnitStatsPageSkeleton />
       ) : (
         <div className="space-y-5">
           {COST_TIERS.map((tier) => {

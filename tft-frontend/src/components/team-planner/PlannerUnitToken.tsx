@@ -1,5 +1,5 @@
 import { useDraggable } from '@dnd-kit/core';
-import { useTftMetadata } from '../../context/TftAssetContext';
+import { useTftAssets } from '../../context/TftAssetContext';
 import { TftUnitImage } from '../shared/TftUnitImage';
 import type { DragUnitPayload, PlannerUnit } from './types';
 
@@ -26,7 +26,7 @@ export function PlannerUnitToken({
   label,
   dragDisabled = false,
 }: PlannerUnitTokenProps) {
-  const { getChampionData } = useTftMetadata();
+  const { getChampionData } = useTftAssets();
 
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: dragId,

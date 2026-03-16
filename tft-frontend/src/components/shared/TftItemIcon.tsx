@@ -1,4 +1,4 @@
-import { useTftMetadata } from '../../context/TftAssetContext';
+import { useTftAssets } from '../../context/TftAssetContext';
 import { PLACEHOLDER_URL } from '../../utils/cdragon';
 import { TftHoverTooltip } from './TftHoverTooltip';
 
@@ -11,7 +11,7 @@ interface TftItemIconProps {
 
 export function TftItemIcon({ itemId, apiName, className, showTooltip = true }: TftItemIconProps) {
   const resolvedId = itemId ?? apiName ?? '';
-  const { itemMap, getItemData } = useTftMetadata();
+  const { itemMap, getItemData } = useTftAssets();
   const src = itemMap.get(resolvedId.toLowerCase())?.icon ?? PLACEHOLDER_URL;
   const item = getItemData(resolvedId);
 

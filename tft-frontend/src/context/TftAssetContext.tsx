@@ -198,10 +198,6 @@ export function useTftAssets() {
   return useContext(TftAssetContext);
 }
 
-export function useTftMetadata() {
-  return useContext(TftAssetContext);
-}
-
 export function TftMetadataProvider({ children }: { children: ReactNode }) {
   const [assets, setAssets] = useState<TftAssets>({
     unitMap: new Map(),
@@ -328,4 +324,4 @@ export function TftMetadataProvider({ children }: { children: ReactNode }) {
   );
 }
 
-export const TftAssetProvider = TftMetadataProvider;
+export { TftMetadataProvider as TftAssetProvider };

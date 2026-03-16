@@ -1,4 +1,5 @@
 import { Loader2 } from 'lucide-react';
+import { LeaderboardTableSkeleton } from './LeaderboardTableSkeleton';
 import type { LeaderboardRow, RegionOption } from './types';
 
 interface LeaderboardTableProps {
@@ -33,16 +34,7 @@ export function LeaderboardTable({
         </thead>
 
         <tbody>
-          {loading &&
-            Array.from({ length: 8 }).map((_, index) => (
-              <tr key={`skeleton-${index}`} className="border-b border-zinc-800/70">
-                {Array.from({ length: 6 }).map((__, cellIndex) => (
-                  <td key={`cell-${index}-${cellIndex}`} className="px-4 py-3">
-                    <div className="h-6 w-full animate-pulse rounded-md bg-zinc-800/80" />
-                  </td>
-                ))}
-              </tr>
-            ))}
+          {loading && <LeaderboardTableSkeleton />}
 
           {!loading && rows.length === 0 && (
             <tr>
