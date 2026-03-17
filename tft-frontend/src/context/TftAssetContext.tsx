@@ -11,6 +11,7 @@ export interface TftUnitData {
   name: string;
   icon: string;
   cost: number | null;
+  traits: string[];
   desc: string;
   abilityName: string;
   abilityDesc: string;
@@ -23,11 +24,18 @@ export interface TftItemData {
   desc: string;
 }
 
+export interface TftTraitEffect {
+  minUnits: number;
+  maxUnits: number;
+  style: number;
+}
+
 export interface TftTraitData {
   apiName: string;
   name: string;
   icon: string;
   desc: string;
+  effects: TftTraitEffect[];
 }
 
 interface TftAssets {
@@ -69,10 +77,14 @@ interface RawChampion {
   icon?: string;
   cost?: number;
   name?: string;
+  traits?: string[];
   ability?: RawChampionAbility;
 }
 
 interface RawTraitEffect {
+  minUnits?: number;
+  maxUnits?: number;
+  style?: number;
   variables?: Record<string, TftTextReplacementValue>;
 }
 
@@ -159,6 +171,7 @@ function getFallbackChampionData(apiName: string): TftUnitData {
     name: formatApiNameFallback(apiName),
     icon: '',
     cost: null,
+    traits: [],
     desc: '',
     abilityName: '',
     abilityDesc: '',
@@ -180,6 +193,7 @@ function getFallbackTraitData(apiName: string): TftTraitData {
     name: formatApiNameFallback(apiName),
     icon: '',
     desc: '',
+    effects: [],
   };
 }
 
@@ -259,6 +273,7 @@ export function TftMetadataProvider({ children }: { children: ReactNode }) {
                   name: champ.name ?? formatApiNameFallback(champ.apiName ?? key),
                   icon: champ.tileIcon ?? champ.icon ? cdragonAssetPathToPngUrl(champ.tileIcon ?? champ.icon ?? '') : '',
                   cost: typeof champ.cost === 'number' ? champ.cost : null,
+                  traits: Array.isArray(champ.traits) ? champ.traits : [],
                   desc: abilityDesc,
                   abilityName: champ.ability?.name?.trim() ?? '',
                   abilityDesc,
@@ -271,11 +286,23 @@ export function TftMetadataProvider({ children }: { children: ReactNode }) {
                 const key = normalizeApiName(trait.apiName ?? '');
                 if (!key) continue;
 
+                const parsedEffects: TftTraitEffect[] = Array.isArray(trait.effects)
+                  ? trait.effects
+                      .filter((e) => typeof e.minUnits === 'number' && typeof e.style === 'number')
+                      .map((e) => ({
+                        minUnits: e.minUnits!,
+                        maxUnits: typeof e.maxUnits === 'number' ? e.maxUnits : 25000,
+                        style: e.style!,
+                      }))
+                      .sort((a, b) => a.minUnits - b.minUnits)
+                  : [];
+
                 traitMap.set(key, {
                   apiName: trait.apiName ?? key,
                   name: trait.name ?? formatApiNameFallback(trait.apiName ?? key),
                   icon: trait.icon ? cdragonAssetPathToPngUrl(trait.icon) : '',
                   desc: cleanTftDescription(trait.desc, getTraitReplacements(trait)),
+                  effects: parsedEffects,
                 });
               }
             }

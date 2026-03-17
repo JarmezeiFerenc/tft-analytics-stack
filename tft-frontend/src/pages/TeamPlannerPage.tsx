@@ -13,6 +13,7 @@ import { Trash2 } from 'lucide-react';
 import { TeamPlannerBoard } from '../components/team-planner/TeamPlannerBoard';
 import { TeamPlannerPageSkeleton } from '../components/team-planner/TeamPlannerPageSkeleton';
 import { TeamPlannerPool } from '../components/team-planner/TeamPlannerPool';
+import { TraitTrackerSidebar } from '../components/team-planner/TraitTrackerSidebar';
 import { TftUnitImage } from '../components/shared/TftUnitImage';
 import { BOARD_SLOT_COUNT, type BoardSlot, type DragUnitPayload, type PlannerUnit } from '../components/team-planner/types';
 import { useTftAssets } from '../context/TftAssetContext';
@@ -209,7 +210,9 @@ export default function TeamPlannerPage() {
 
   return (
     <DndContext sensors={sensors} collisionDetection={pointerWithin} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
-      <section className="space-y-6">
+      <div className="flex gap-6">
+      <TraitTrackerSidebar boardSlots={boardSlots} />
+      <section className="min-w-0 flex-1 space-y-6">
         <header className="overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-900/80 p-5 sm:p-6">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
@@ -252,6 +255,7 @@ export default function TeamPlannerPage() {
           ) : null}
         </DragOverlay>
       </section>
+      </div>
     </DndContext>
   );
 }
