@@ -4,9 +4,10 @@ import type { BoardSlot } from './types';
 interface TeamPlannerBoardProps {
   boardSlots: BoardSlot[];
   activeSlotIndex?: number | null;
+  onStarCycle: (slotIndex: number) => void;
 }
 
-export function TeamPlannerBoard({ boardSlots, activeSlotIndex }: TeamPlannerBoardProps) {
+export function TeamPlannerBoard({ boardSlots, activeSlotIndex, onStarCycle }: TeamPlannerBoardProps) {
   return (
     <div className="flex justify-center rounded-2xl border border-zinc-800/60 bg-zinc-900/50 py-6 sm:py-8">
       <div className="hex-grid">
@@ -25,6 +26,7 @@ export function TeamPlannerBoard({ boardSlots, activeSlotIndex }: TeamPlannerBoa
                   slotIndex={rowStart + colIndex}
                   unit={unit}
                   activeSlotIndex={activeSlotIndex}
+                  onStarCycle={onStarCycle}
                 />
               ))}
             </div>

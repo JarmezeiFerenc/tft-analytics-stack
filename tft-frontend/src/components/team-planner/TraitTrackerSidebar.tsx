@@ -1,9 +1,8 @@
 import { useTftAssets } from '../../context/TftAssetContext';
 import { PLACEHOLDER_URL } from '../../utils/cdragon';
+import { TftHoverTooltip } from '../shared/TftHoverTooltip';
 import type { BoardSlot } from './types';
 import { useTraitTracker, type TraitStatus } from './useTraitTracker';
-
-/* ── tier colour helpers ── */
 
 const TIER_BG: Record<number, string> = {
   0: 'bg-zinc-800/60',
@@ -41,8 +40,6 @@ function tierText(style: number): string {
   return TIER_TEXT[style] ?? TIER_TEXT[0];
 }
 
-/* ── threshold pill component ── */
-
 function ThresholdPills({ trait }: { trait: TraitStatus }) {
   return (
     <div className="flex items-center gap-1">
@@ -67,8 +64,6 @@ function ThresholdPills({ trait }: { trait: TraitStatus }) {
   );
 }
 
-/* ── trait row ── */
-
 function TraitRow({ trait }: { trait: TraitStatus }) {
   const isActive = trait.activeStyle > 0;
   const bg = tierBg(trait.activeStyle);
@@ -76,42 +71,39 @@ function TraitRow({ trait }: { trait: TraitStatus }) {
   const countColor = isActive ? tierText(trait.activeStyle) : 'text-zinc-600';
 
   return (
-    <div
-      className={`group flex items-center gap-2.5 rounded-xl px-2.5 py-1.5 transition ${
-        isActive ? 'bg-zinc-800/40' : 'opacity-50'
-      }`}
-    >
-      {/* icon */}
+    <TftHoverTooltip title={trait.name} description={trait.desc}>
       <div
-        className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ring-1 ${bg} ${ring}`}
+        className={`group flex items-center gap-2.5 rounded-xl px-2.5 py-1.5 transition ${
+          isActive ? 'bg-zinc-800/40' : 'opacity-50'
+        }`}
       >
-        <img
-          src={trait.icon || PLACEHOLDER_URL}
-          alt={trait.name}
-          className="h-5 w-5 object-contain"
-          loading="lazy"
-          onError={(e) => {
-            const img = e.currentTarget;
-            if (img.src !== PLACEHOLDER_URL) img.src = PLACEHOLDER_URL;
-          }}
-        />
-      </div>
+        <div
+          className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ring-1 ${bg} ${ring}`}
+        >
+          <img
+            src={trait.icon || PLACEHOLDER_URL}
+            alt={trait.name}
+            className="h-5 w-5 object-contain"
+            loading="lazy"
+            onError={(e) => {
+              const img = e.currentTarget;
+              if (img.src !== PLACEHOLDER_URL) img.src = PLACEHOLDER_URL;
+            }}
+          />
+        </div>
 
-      {/* count */}
-      <span className={`w-5 text-center text-sm font-bold tabular-nums ${countColor}`}>
-        {trait.count}
-      </span>
+        <span className={`w-5 text-center text-sm font-bold tabular-nums ${countColor}`}>
+          {trait.count}
+        </span>
 
-      {/* name + thresholds */}
-      <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-        <span className="truncate text-xs font-medium text-zinc-200">{trait.name}</span>
-        <ThresholdPills trait={trait} />
+        <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+          <span className="truncate text-xs font-medium text-zinc-200">{trait.name}</span>
+          <ThresholdPills trait={trait} />
+        </div>
       </div>
-    </div>
+    </TftHoverTooltip>
   );
 }
-
-/* ── sidebar ── */
 
 interface TraitTrackerSidebarProps {
   boardSlots: BoardSlot[];
@@ -123,15 +115,13 @@ export function TraitTrackerSidebar({ boardSlots }: TraitTrackerSidebarProps) {
 
   return (
     <aside className="hidden w-64 shrink-0 lg:block">
-      <div className="sticky top-4 overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-900/80">
-        {/* header */}
+      <div className="sticky top-4 rounded-2xl border border-zinc-800 bg-zinc-900/80">
         <div className="border-b border-zinc-800/60 px-4 py-3">
           <h2 className="text-[10px] uppercase tracking-[0.25em] text-zinc-400">
             Synergies
           </h2>
         </div>
 
-        {/* body */}
         <div className="max-h-[calc(100vh-10rem)] overflow-y-auto px-1.5 py-2">
           {traits.length === 0 ? (
             <p className="px-3 py-6 text-center text-xs text-zinc-600">

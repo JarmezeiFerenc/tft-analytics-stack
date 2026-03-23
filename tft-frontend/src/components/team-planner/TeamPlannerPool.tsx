@@ -26,28 +26,28 @@ export function TeamPlannerPool({ unitsByTier }: TeamPlannerPoolProps) {
   });
 
   return (
-    <section
+    <div
       ref={setNodeRef}
-      className={`rounded-2xl border bg-zinc-900/70 p-4 transition sm:p-5 ${
+      className={`rounded-2xl border bg-zinc-900/70 p-3 transition sm:p-4 ${
         isOver ? 'border-red-400/50' : 'border-zinc-800'
       }`}
     >
-      <div className="space-y-4">
+      <div className="space-y-3">
         {COST_TIERS.map((tier) => {
           const units = unitsByTier.get(tier) ?? [];
           if (units.length === 0) return null;
 
           return (
             <div key={`tier-${tier}`}>
-              <div className="mb-2 flex items-center gap-2">
+              <div className="mb-1.5 flex items-center gap-2">
                 <span
-                  className={`rounded-md border px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest ${tierLabel[tier]}`}
+                  className={`rounded-md border px-1.5 py-px text-[9px] font-bold uppercase tracking-widest ${tierLabel[tier]}`}
                 >
-                  {tier}-Cost
+                  {tier}
                 </span>
-                <span className="text-[10px] text-zinc-500">{units.length}</span>
+                <span className="text-[9px] text-zinc-600">{units.length}</span>
               </div>
-              <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-8">
+              <div className="flex flex-wrap gap-1">
                 {units.map((unit) => (
                   <PlannerUnitToken
                     key={`pool-${unit.id}`}
@@ -62,6 +62,6 @@ export function TeamPlannerPool({ unitsByTier }: TeamPlannerPoolProps) {
           );
         })}
       </div>
-    </section>
+    </div>
   );
 }
