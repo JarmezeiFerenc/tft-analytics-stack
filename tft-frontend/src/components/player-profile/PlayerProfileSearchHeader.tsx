@@ -1,27 +1,26 @@
 import { Search, User } from 'lucide-react';
 import type { RegionOption } from './types';
+import type { ParsedRiotId } from '../../utils/riotId';
 
 interface PlayerProfileSearchHeaderProps {
   formRegion: string;
-  formName: string;
-  formTag: string;
+  riotId: string;
+  parsed: ParsedRiotId | null;
   loading: boolean;
   regionOptions: RegionOption[];
   setFormRegion: (value: string) => void;
-  setFormName: (value: string) => void;
-  setFormTag: (value: string) => void;
+  setRiotId: (value: string) => void;
   handleSubmit: (event: React.FormEvent) => void;
 }
 
 export function PlayerProfileSearchHeader({
   formRegion,
-  formName,
-  formTag,
+  riotId,
+  parsed,
   loading,
   regionOptions,
   setFormRegion,
-  setFormName,
-  setFormTag,
+  setRiotId,
   handleSubmit,
 }: PlayerProfileSearchHeaderProps) {
   return (
@@ -36,7 +35,7 @@ export function PlayerProfileSearchHeader({
         </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="mt-4 grid gap-3 sm:grid-cols-[140px_1fr_1fr_auto]">
+      <form onSubmit={handleSubmit} className="mt-4 grid gap-3 sm:grid-cols-[140px_1fr_auto]">
         <label className="space-y-1 text-sm">
           <span className="text-zinc-400">Region</span>
           <select
@@ -53,34 +52,26 @@ export function PlayerProfileSearchHeader({
         </label>
 
         <label className="space-y-1 text-sm">
-          <span className="text-zinc-400">Game Name</span>
+          <span className="text-zinc-400">Riot ID</span>
           <input
-            value={formName}
-            onChange={(e) => setFormName(e.target.value)}
-            placeholder="Dishsoap"
-            className="w-full rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-2 text-zinc-100 outline-none ring-indigo-500/70 transition focus:ring"
-          />
-        </label>
-
-        <label className="space-y-1 text-sm">
-          <span className="text-zinc-400">Tagline</span>
-          <input
-            value={formTag}
-            onChange={(e) => setFormTag(e.target.value)}
-            placeholder="NA1"
+            value={riotId}
+            onChange={(e) => setRiotId(e.target.value)}
+            placeholder="GameName#Tagline"
             className="w-full rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-2 text-zinc-100 outline-none ring-indigo-500/70 transition focus:ring"
           />
         </label>
 
         <button
           type="submit"
-          disabled={loading}
+          disabled={loading || !parsed}
           className="h-fit self-end rounded-xl bg-indigo-500 px-5 py-2 text-sm font-medium text-white transition hover:bg-indigo-400 disabled:opacity-50"
         >
           <Search size={16} className="mr-1.5 inline-block" />
           Search
         </button>
       </form>
+
+      {!parsed && riotId.length > 0 && <p className="mt-2 text-xs text-red-300">Use format: GameName#Tagline</p>}
     </header>
   );
 }

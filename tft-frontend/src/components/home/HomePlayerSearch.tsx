@@ -1,16 +1,17 @@
 import { Search } from 'lucide-react';
+import type { ParsedRiotId } from '../../utils/riotId';
 
-interface HomeHeroSearchProps {
+interface HomePlayerSearchProps {
   regionOptions: Array<{ label: string; value: string }>;
   region: string;
   riotId: string;
-  parsed: { gameName: string; tagline: string } | null;
+  parsed: ParsedRiotId | null;
   setRegion: (value: string) => void;
   setRiotId: (value: string) => void;
   handleSearch: (event: React.FormEvent) => void;
 }
 
-export function HomeHeroSearch({
+export function HomePlayerSearch({
   regionOptions,
   region,
   riotId,
@@ -18,7 +19,7 @@ export function HomeHeroSearch({
   setRegion,
   setRiotId,
   handleSearch,
-}: HomeHeroSearchProps) {
+}: HomePlayerSearchProps) {
   return (
     <div className="rounded-3xl border border-zinc-800 bg-zinc-900/70 p-8 sm:p-10">
       <div className="mx-auto max-w-4xl text-center">
@@ -63,7 +64,7 @@ export function HomeHeroSearch({
           </button>
         </form>
 
-        {!parsed && riotId.length > 0 && <p className="mt-2 text-xs text-red-300">Use format: `GameName#Tagline`</p>}
+        {!parsed && riotId.length > 0 && <p className="mt-2 text-xs text-red-300">Use format: GameName#Tagline</p>}
       </div>
     </div>
   );

@@ -1,8 +1,9 @@
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { HomeHeroSearch } from '../components/home/HomeHeroSearch';
+import { HomePlayerSearch } from '../components/home/HomePlayerSearch';
 import { HomeProjectFooter } from '../components/home/HomeProjectFooter';
 import { HomeUnderTheHood } from '../components/home/HomeUnderTheHood';
+import { parseRiotId } from '../utils/riotId';
 
 const REGION_OPTIONS = [
   { label: 'EUW', value: 'euw1' },
@@ -11,14 +12,6 @@ const REGION_OPTIONS = [
   { label: 'KR', value: 'kr' },
   { label: 'BR', value: 'br1' },
 ];
-
-function parseRiotId(input: string): { gameName: string; tagline: string } | null {
-  const [name, tag] = input.split('#');
-  const gameName = name?.trim();
-  const tagline = tag?.trim();
-  if (!gameName || !tagline) return null;
-  return { gameName, tagline };
-}
 
 export default function HomePage() {
   const navigate = useNavigate();
@@ -35,7 +28,7 @@ export default function HomePage() {
 
   return (
     <section className="space-y-8">
-      <HomeHeroSearch
+      <HomePlayerSearch
         regionOptions={REGION_OPTIONS}
         region={region}
         riotId={riotId}

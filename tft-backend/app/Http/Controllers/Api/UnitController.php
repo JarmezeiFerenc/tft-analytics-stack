@@ -11,7 +11,7 @@ class UnitController extends Controller
 {
     public function getAggregatedUnitStats()
     {
-        $response = Cache::remember('global_unit_stats', 3600, function () {
+        $response = Cache::remember('global_unit_stats', 21600, function () {
             
             $rows = DB::select(<<<'SQL'
                 WITH unit_avg AS (

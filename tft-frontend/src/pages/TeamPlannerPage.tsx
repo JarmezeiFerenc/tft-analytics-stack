@@ -14,8 +14,9 @@ import { TeamPlannerBoard } from '../components/team-planner/TeamPlannerBoard';
 import { TeamPlannerPageSkeleton } from '../components/team-planner/TeamPlannerPageSkeleton';
 import { TeamPlannerPool } from '../components/team-planner/TeamPlannerPool';
 import { ItemPool } from '../components/team-planner/ItemPool';
-import { TraitTrackerSidebar } from '../components/team-planner/TraitTrackerSidebar';
+import { TraitTrackerSidebar, MobileTraitButton } from '../components/team-planner/TraitTrackerSidebar';
 import { TftUnitImage } from '../components/shared/TftUnitImage';
+import { TftItemIcon } from '../components/shared/TftItemIcon';
 import {
   BOARD_SLOT_COUNT,
   MAX_ITEMS_PER_UNIT,
@@ -277,6 +278,7 @@ export default function TeamPlannerPage() {
   }
 
   const activeUnitDrag = activeDrag && isUnitPayload(activeDrag) ? activeDrag : null;
+  const activeItemDrag = activeDrag && isItemPayload(activeDrag) ? activeDrag : null;
 
   return (
     <DndContext sensors={sensors} collisionDetection={pointerWithin} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
@@ -331,10 +333,15 @@ export default function TeamPlannerPage() {
             <div className="hex-clip hex-slot pointer-events-none opacity-90">
               <TftUnitImage apiName={activeUnitDrag.unit.id} className="h-full w-full object-cover" showTooltip={false} />
             </div>
+          ) : activeItemDrag ? (
+            <div className="pointer-events-none flex h-10 w-10 items-center justify-center rounded-lg bg-zinc-900 p-0.5 ring-1 ring-zinc-600 shadow-lg shadow-black/50">
+              <TftItemIcon apiName={activeItemDrag.itemApiName} showTooltip={false} className="h-full w-full object-contain" />
+            </div>
           ) : null}
         </DragOverlay>
       </section>
       </div>
+      <MobileTraitButton boardSlots={boardSlots} />
     </DndContext>
   );
 }
